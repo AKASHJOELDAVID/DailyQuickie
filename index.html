@@ -1,0 +1,4329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DailyQuickie — as much as we all love it long, let's keep it quick over here</title>
+  <meta name="description" content="A daily wall of short notes from anywhere. Rants, reviews, tiny insights. One paragraph. That's all." />
+
+  <!-- Add to Home Screen / PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="DailyQuickie" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#f9f7f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f7f4;
+      --bg2: #f2efe9;
+      --bg3: #eae6de;
+      --ink: #1c1a17;
+      --ink2: #6b6356;
+      --ink3: #b5aa9a;
+      --accent: #d85a30;
+      --accent-soft: rgba(216, 90, 48, 0.1);
+      --border: rgba(28,26,23,0.1);
+      --border2: rgba(28,26,23,0.06);
+      --border3: rgba(28,26,23,0.15);
+      --sidebar-w: 230px;
+      --sans: 'DM Sans', sans-serif;
+      --serif: 'Cormorant Garamond', serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141210;
+        --bg2: #1c1a17;
+        --bg3: #242118;
+        --ink: #f0ece4;
+        --ink2: #a09890;
+        --ink3: #5a5448;
+        --border: rgba(240,236,228,0.08);
+        --border2: rgba(240,236,228,0.04);
+        --border3: rgba(240,236,228,0.12);
+      }
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 28px 22px;
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 24px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .logo em { font-style: italic; font-weight: 400; color: var(--ink2); }
+
+    .tagline {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--ink2);
+      margin-top: 10px;
+      line-height: 1.55;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink3);
+      margin-top: 32px;
+      padding-top: 22px;
+      padding-bottom: 12px;
+      border-top: 1px solid var(--border2);
+    }
+    /* First section label has no top border since there's nothing above it */
+    .sidebar > .section-label:first-of-type {
+      margin-top: 36px;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .archive-tree {
+      margin-top: -4px;
+    }
+
+    .year-btn {
+      width: calc(100% + 20px);
+      margin: 0 -10px;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: left;
+      border-radius: 3px;
+      transition: background 0.12s;
+      letter-spacing: -0.01em;
+    }
+    .year-btn:hover { background: var(--border2); }
+    .year-btn.active { background: transparent; }
+
+    .chevron {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--ink2);
+      display: inline-block;
+      transition: transform 0.2s;
+      transform: rotate(-90deg);
+      opacity: 0.85;
+    }
+    .chevron.open { transform: rotate(0deg); opacity: 1; color: var(--ink); }
+
+    .chevron-small {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--ink2);
+      display: inline-block;
+      transition: transform 0.2s;
+      transform: rotate(-90deg);
+      opacity: 0.8;
+    }
+    .chevron-small.open { transform: rotate(0deg); opacity: 1; color: var(--ink); }
+
+    .month-list { display: none; padding-left: 4px; border-left: 1px solid var(--border2); margin-left: 6px; }
+    .month-list.open { display: block; }
+
+    .month-btn {
+      width: 100%;
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--ink2);
+      text-align: left;
+      border-radius: 2px;
+      transition: background 0.12s, color 0.12s;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .month-btn:hover { background: var(--border2); color: var(--ink); }
+    .month-btn.active { color: var(--ink); font-weight: 500; }
+
+    .month-count {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--ink3);
+      letter-spacing: 0;
+    }
+
+    .day-list { display: none; padding-left: 10px; margin-left: 4px; border-left: 1px dotted var(--border3); }
+    .day-list.open {
+      display: block;
+      padding-bottom: 6px;
+      padding-top: 2px;
+      max-height: 140px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border3) transparent;
+    }
+    .day-list.open::-webkit-scrollbar { width: 4px; }
+    .day-list.open::-webkit-scrollbar-track { background: transparent; }
+    .day-list.open::-webkit-scrollbar-thumb { background: var(--border3); border-radius: 2px; }
+
+    .day-btn {
+      width: 100%;
+      padding: 4px 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink3);
+      text-align: left;
+      border-radius: 2px;
+      transition: background 0.12s, color 0.12s;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .day-btn:hover { background: var(--border2); color: var(--ink2); }
+    .day-btn.active { color: var(--ink); background: var(--bg3); font-weight: 500; }
+    .day-btn .day-num { letter-spacing: 0.02em; }
+    .day-btn .day-today-label { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink2); margin-left: 6px; }
+    .day-count { font-size: 9px; color: var(--ink3); }
+
+    .past-prompt-item { margin-bottom: 14px; }
+    .past-prompt-date {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink3);
+      margin-bottom: 3px;
+    }
+    .past-prompt-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 14px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    /* ── LIVE NOW MODULE (dark card — used only in mobile drawer) ── */
+    .live-now {
+      background: var(--ink);
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin: 28px 0 24px;
+      color: var(--bg);
+    }
+    /* Hide the sidebar dark card on desktop — top bar ticker replaces it */
+    .live-now-sidebar { display: none !important; }
+    .live-now-lbl {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+    .live-now-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #d85a30;
+      display: inline-block;
+      animation: liveNowPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes liveNowPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .live-now-lbl-text {
+      font-family: var(--mono);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #a09890;
+    }
+    .live-now-spread {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 14px;
+      line-height: 1.35;
+      color: var(--bg);
+    }
+    .live-now-spread strong {
+      font-weight: 600;
+      font-style: normal;
+    }
+    .live-now-codes {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: #a09890;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    /* ── QUOTE OF THE DAY DARK BOX (desktop top bar — sleek, grows to fit, wraps only when near left text) ── */
+    .quote-topbox {
+      background: var(--ink);
+      border-radius: 8px;
+      padding: 14px 20px;
+      color: var(--bg);
+      flex-shrink: 0;
+      width: fit-content;
+      max-width: 60%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-left: auto;
+      justify-content: center;
+    }
+    .quote-topbox-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #a09890;
+    }
+    .quote-topbox-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 17px;
+      color: var(--bg);
+      line-height: 1.4;
+    }
+    .quote-topbox-sig {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #6b6356;
+      margin-top: 2px;
+    }
+
+    /* ── QUOTE OF THE DAY SIDEBAR CARD (mobile drawer) ── */
+    .quote-sidebar {
+      display: none;
+      background: var(--ink);
+      border-radius: 6px;
+      padding: 16px 18px;
+      margin: 20px 0 20px;
+      color: var(--bg);
+    }
+    .quote-sidebar-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #a09890;
+      margin-bottom: 8px;
+    }
+    .quote-sidebar-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--bg);
+      line-height: 1.4;
+    }
+    .quote-sidebar-sig {
+      font-family: var(--mono);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #6b6356;
+      margin-top: 8px;
+    }
+    /* Hide the desktop quote box on mobile — quote shows in mobile drawer too */
+    @media (max-width: 720px) {
+      .quote-topbox { display: none !important; }
+      .live-now-sidebar { display: block !important; }
+      .quote-sidebar { display: block !important; }
+    }
+
+    .sidebar-foot {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border2);
+    }
+
+    .reach-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink3);
+      margin-bottom: 8px;
+    }
+    .reach-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--ink2);
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+    .reach-email {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink);
+      border-bottom: 1px solid var(--border3);
+      padding-bottom: 1px;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .reach-email:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .total-count {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink3);
+      margin-top: 18px;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .main-header {
+      padding: 20px 36px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .main-header-title {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .main-title {
+      font-family: var(--serif);
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .main-title em { font-style: italic; font-weight: 400; color: var(--ink2); }
+
+    .main-stats {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink2);
+      margin-top: 10px;
+    }
+
+    .today-pill {
+      background: var(--ink);
+      border-radius: 10px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+    .today-pill-top {
+      font-family: var(--mono);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink3);
+      margin-bottom: 5px;
+      line-height: 1;
+    }
+    .today-pill-num {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--bg);
+      line-height: 1;
+      font-variant-numeric: lining-nums tabular-nums;
+      font-feature-settings: "lnum" 1, "onum" 0, "tnum" 1;
+    }
+    .today-pill-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink3);
+      margin-top: 5px;
+    }
+
+    .main-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 36px 40px;
+    }
+    .main-scroll-inner {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* ── PROMPT BLOCK ── */
+    .prompt-block {
+      background: var(--ink);
+      border-radius: 6px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
+      color: var(--bg);
+    }
+    .prompt-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .prompt-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .prompt-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink3);
+    }
+    .prompt-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1.3;
+      color: var(--bg);
+    }
+    .prompt-hint {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink3);
+      margin-top: 14px;
+      font-style: italic;
+    }
+
+    /* ── COMPOSE ── */
+    .compose {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin-bottom: 32px;
+    }
+    .compose-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .compose-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink3);
+      flex-shrink: 0;
+    }
+
+    input.name-input {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border3);
+      outline: none;
+      padding: 2px 0;
+      width: 200px;
+      transition: border-color 0.15s;
+    }
+    input.name-input:focus { border-color: var(--ink2); }
+    input.name-input::placeholder { color: var(--ink3); font-style: italic; }
+
+    .location-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink2);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    textarea.note-ta {
+      width: 100%;
+      min-height: 72px;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 4px 0;
+    }
+    textarea.note-ta::placeholder { color: var(--ink3); font-style: italic; }
+
+    .nudge-warning {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink3);
+      margin-top: 4px;
+      min-height: 14px;
+      font-style: italic;
+      transition: color 0.2s;
+    }
+    .nudge-warning.active { color: #a07040; }
+
+    .error-msg {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #a04030;
+      margin-top: 6px;
+      min-height: 14px;
+      font-style: italic;
+    }
+
+    .compose-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .prompt-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .prompt-toggle input {
+      accent-color: var(--accent);
+      margin: 0;
+      width: auto;
+    }
+    .prompt-toggle-text {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink2);
+    }
+    .prompt-toggle.hidden { display: none; }
+
+    .post-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 20px;
+      border-radius: 4px;
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .post-btn:hover { opacity: 0.85; }
+    .post-btn:active { transform: scale(0.97); }
+    .post-btn.waiting {
+      background: var(--ink3);
+      cursor: not-allowed;
+    }
+
+    /* ── FEED HEADER + FILTER ── */
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .feed-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink3);
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 2px;
+      background: var(--bg3);
+      border-radius: 20px;
+      padding: 3px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .filter-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--ink2);
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .filter-btn:hover { color: var(--ink); }
+    }
+    .filter-btn.active {
+      background: var(--ink);
+      color: var(--bg);
+    }
+
+    /* ── FEED ── */
+    .note-card {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border2);
+      animation: fadeIn 0.3s ease;
+    }
+    .note-card:last-child {
+      border-bottom: none;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Flagged note (only visible to owner — class is only added when isOwner && reports > 0) */
+    .note-card.flagged {
+      padding: 16px 14px 16px 14px;
+      margin: 4px 0;
+      border-left: 2px solid #a04030;
+      background: rgba(160, 64, 48, 0.04);
+      border-radius: 0 4px 4px 0;
+      border-bottom: 1px solid rgba(160, 64, 48, 0.08);
+    }
+
+    /* Pinned note — personal, this-browser-only highlight */
+    .note-card.pinned {
+      padding: 16px 14px 16px 14px;
+      margin: 4px 0;
+      border-left: 2px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 4px 4px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .pin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink3);
+      background: none;
+      border: 1px solid var(--border3);
+      padding: 4px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .pin-btn:hover { color: var(--accent); border-color: var(--accent); }
+    }
+    .pin-btn.pinned {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: transparent;
+    }
+
+    .reports-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: #a04030;
+      background: rgba(160, 64, 48, 0.12);
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-left: 4px;
+    }
+
+    /* Owner-only: "flagged first" indicator on the feed header */
+    .flagged-first-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #a04030;
+      background: rgba(160, 64, 48, 0.08);
+      padding: 4px 10px;
+      border-radius: 16px;
+    }
+
+    /* Owner-only: reports pill next to the today-pill */
+    .reports-pill {
+      background: rgba(160, 64, 48, 0.1);
+      border: 1px solid rgba(160, 64, 48, 0.25);
+      border-radius: 10px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+    .reports-pill-num {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 600;
+      color: #a04030;
+      line-height: 1;
+      font-variant-numeric: lining-nums tabular-nums;
+      font-feature-settings: "lnum" 1, "onum" 0, "tnum" 1;
+    }
+    .reports-pill-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #a04030;
+      margin-top: 5px;
+    }
+
+    /* Stats inline flag count */
+    .stats-flag-count {
+      color: #a04030;
+      font-weight: 500;
+    }
+
+    /* Group the pills in the header */
+    .header-pills {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      align-self: stretch;
+      flex-shrink: 0;
+    }
+
+    .note-meta {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .meta-break { display: none; }
+
+    .note-name {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 10px;
+      color: var(--ink);
+      line-height: 1.4;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .note-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--ink2);
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .note-location {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink2);
+      line-height: 1.4;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .note-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink3);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .note-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .note-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      padding: 48px 0;
+      text-align: center;
+      font-style: italic;
+      font-size: 15px;
+      color: var(--ink3);
+      font-family: var(--serif);
+    }
+
+    .loading-state {
+      padding: 32px 0;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink3);
+    }
+
+    /* ── SITE FOOTER ── */
+    .site-footer-line {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin-top: 24px;
+    }
+    .site-footer {
+      width: 100%;
+      padding: 18px 36px 4px;
+    }
+    .site-footer-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .site-footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .site-footer-logo {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .site-footer-logo em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--ink2);
+    }
+    .site-footer-byline {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink3);
+    }
+    .site-footer-tag {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--ink2);
+      text-align: right;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    @media (max-width: 720px) {
+      .site-footer-line { margin-top: 20px; }
+      .site-footer { padding: 14px 16px 4px; }
+      .site-footer-inner { gap: 10px; }
+      .site-footer-logo { font-size: 16px; }
+      .site-footer-byline { font-size: 8px; }
+      .site-footer-tag { font-size: 11px; }
+    }
+
+    /* ── PAST DAY NOTICE ── */
+    .past-day-notice {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .past-day-notice-text {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--ink2);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .past-day-notice-text em {
+      color: var(--ink);
+      font-style: italic;
+      font-weight: 500;
+    }
+    .past-day-notice-btn {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .past-day-notice-btn:hover { background: var(--ink2); }
+    @media (max-width: 720px) {
+      .past-day-notice { padding: 14px 16px; }
+      .past-day-notice-text { font-size: 14px; }
+      .past-day-notice-btn { font-size: 9px; padding: 7px 12px; }
+    }
+
+    /* ── OWNER DELETE BUTTON (only visible to you) ── */
+    .owner-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #a04030;
+      padding: 2px 6px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .owner-delete:hover { background: rgba(160, 64, 48, 0.1); }
+    }
+
+    .report-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid var(--border3);
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--ink3);
+      padding: 4px;
+      flex-shrink: 0;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .report-btn:hover { color: #dc2626; border-color: #dc2626; }
+    }
+    .report-btn.reported { color: #dc2626; background: rgba(220,38,38,0.1); border-color: transparent; cursor: pointer; }
+    @media (hover: hover) and (pointer: fine) {
+      .report-btn.reported:hover { color: #6b6356; border-color: var(--border3); background: none; }
+    }
+
+    /* ── MOBILE HEADER + DRAWER ── */
+    .mobile-header {
+      display: none;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 18px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      min-height: 68px;
+      box-sizing: border-box;
+    }
+
+    .mobile-logo {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+    .mobile-logo em { font-style: italic; font-weight: 400; color: var(--ink2); }
+
+    .mobile-tagline-center {
+      flex: 1;
+      text-align: right;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 12.5px;
+      color: var(--ink);
+      line-height: 1.3;
+      padding: 0 6px;
+    }
+
+    .hamburger {
+      background: none;
+      border: 1px solid var(--border3);
+      border-radius: 4px;
+      padding: 0;
+      cursor: pointer;
+      width: 34px;
+      height: 30px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 16px;
+      height: 1.5px;
+      margin-left: -8px;
+      background: var(--ink);
+      border-radius: 1px;
+      transition: transform 0.25s ease, opacity 0.15s ease;
+    }
+    .hamburger span:nth-child(1) { transform: translateY(-5px); }
+    .hamburger span:nth-child(2) { transform: translateY(0); }
+    .hamburger span:nth-child(3) { transform: translateY(5px); }
+
+    .hamburger.open span:nth-child(1) { transform: translateY(0) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: translateY(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(0) rotate(-45deg); }
+
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 26, 23, 0.35);
+      z-index: 998;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .drawer-overlay.open { display: block; opacity: 1; }
+    .owner-login-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(28,26,23,0.45);
+      align-items: center; justify-content: center;
+    }
+    .owner-login-box {
+      background: var(--bg); border: 1px solid var(--border3); border-radius: 10px;
+      padding: 20px; width: 260px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .owner-login-title { font-family: var(--mono); font-size: 12px; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.04em; }
+    .owner-login-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    #ownerLogoutRow { display: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 720px) {
+      html, body {
+        overflow: auto;
+        height: auto;
+      }
+      body { min-height: 100vh; }
+      .layout {
+        flex-direction: column;
+        overflow: visible;
+        height: auto;
+      }
+
+      .mobile-header { display: flex; }
+
+      .sidebar {
+        position: fixed;
+        top: 68px;
+        right: -100%;
+        bottom: 0;
+        width: min(82%, 300px);
+        max-height: none;
+        border-right: none;
+        border-left: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+        z-index: 999;
+        transition: right 0.28s ease;
+        box-shadow: -8px 0 24px rgba(28, 26, 23, 0.08), 0 -1px 0 rgba(255, 255, 255, 0.5);
+        padding: 24px 20px 28px;
+        overflow-y: auto;
+      }
+      .sidebar.open { right: 0; }
+
+      /* Drawer overlay also starts at 62px so it doesn't cover the top bar */
+      .drawer-overlay { top: 68px; }
+
+      /* When drawer is open, dim the mobile header too so the whole background fades back */
+      body.drawer-open .mobile-header {
+        position: relative;
+      }
+      body.drawer-open .mobile-header::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(28, 26, 23, 0.35);
+        pointer-events: none;
+        z-index: 1;
+        animation: headerDim 0.25s ease forwards;
+      }
+      @keyframes headerDim {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      /* Drawer: hide logo + tagline — they live in the mobile top bar */
+      .sidebar > .logo { display: none; }
+      .sidebar > .tagline { display: none; }
+      .sidebar > .section-label:first-of-type { margin-top: 0; }
+
+      /* Bigger, more tappable archive tree */
+      .sidebar .section-label {
+        font-size: 10px;
+        margin-top: 24px;
+        padding-bottom: 12px;
+      }
+      .sidebar .year-btn {
+        font-size: 26px;
+        padding: 12px 14px;
+      }
+      .sidebar .month-btn {
+        font-size: 16px;
+        padding: 11px 14px;
+        letter-spacing: 0.1em;
+      }
+      .sidebar .month-count {
+        font-size: 13px;
+      }
+      .sidebar .day-btn {
+        font-size: 16px;
+        padding: 10px 14px;
+      }
+      .sidebar .day-list.open { max-height: 220px; }
+      .sidebar .day-btn .day-today-label {
+        font-size: 16px;
+      }
+      .sidebar .day-count {
+        font-size: 13px;
+      }
+      .sidebar .chevron {
+        font-size: 15px;
+        color: var(--ink);
+        opacity: 1;
+      }
+      .sidebar .chevron.open { color: var(--ink); }
+      .sidebar .chevron-small {
+        font-size: 13px;
+        color: var(--ink);
+        opacity: 1;
+      }
+      .sidebar .chevron-small.open { color: var(--ink); }
+
+      /* Larger past prompts too */
+      .sidebar .past-prompt-item { margin-bottom: 20px; }
+      .sidebar .past-prompt-date { font-size: 12px; margin-bottom: 4px; }
+      .sidebar .past-prompt-text { font-size: 17px; line-height: 1.4; }
+
+      /* Reach AJD block bigger too */
+      .sidebar .reach-label { font-size: 11px; margin-bottom: 10px; }
+      .sidebar .reach-text { font-size: 15px; margin-bottom: 10px; }
+      .sidebar .reach-email { font-size: 13px; }
+      .sidebar .total-count { font-size: 12px; margin-top: 22px; }
+
+      .main {
+        overflow: visible;
+        height: auto;
+      }
+      .main-scroll {
+        overflow: visible;
+        padding: 18px 16px 40px;
+        height: auto;
+      }
+      .main-scroll-inner { max-width: 100%; }
+      .main-header { padding: 22px 20px; flex-wrap: wrap; gap: 12px; }
+      .main-title { font-size: 30px; }
+      .main-stats { font-size: 12px; line-height: 1.5; }
+      .today-pill { padding: 11px 18px; }
+      .today-pill-num { font-size: 28px; }
+      .today-pill-lbl { font-size: 9px; }
+      .today-pill-top { font-size: 9px; }
+
+      .compose { padding: 18px; }
+      .compose-foot { gap: 8px; flex-wrap: nowrap; }
+      .post-btn { padding: 10px 16px; font-size: 10.5px; flex-shrink: 0; }
+      input.name-input { width: 100%; flex: 1; }
+      textarea.note-ta { min-height: 110px; }
+      .prompt-toggle { background: var(--bg3); border-radius: 8px; padding: 9px 12px; min-width: 0; }
+      .prompt-toggle input { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+      .prompt-toggle-text {
+        font-size: 9.5px;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+
+      .prompt-block { padding: 20px; }
+      .prompt-text { font-size: 21px; }
+
+      .note-name { font-size: 12px; }
+      .note-body { font-size: 17px; line-height: 1.7; }
+      .note-meta { font-size: 12px; }
+      .note-time { font-size: 12px; }
+
+      .filter-btn { padding: 7px 6px; font-size: 8px; letter-spacing: 0.06em; }
+      .filter-group { width: 100%; }
+      .filter-btn { flex: 1; text-align: center; }
+      .feed-header { flex-direction: column; align-items: flex-start; }
+
+      .mobile-header .mobile-logo { font-size: 22px; }
+
+      /* Prevent body scroll when drawer is open */
+      body.drawer-open { overflow: hidden; }
+
+      /* Reply thread: bigger text + tap targets, and fix iOS zoom on the reply input */
+      .reply-name { font-size: 11px; }
+      .reply-body { font-size: 15px; line-height: 1.6; }
+      .reply-time, .reply-location { font-size: 11px; }
+      .reply-btn, .reply-toggle-btn { font-size: 10.5px; padding: 4px 0; }
+      .reply-report-btn { padding: 6px; }
+      .reply-report-btn svg { width: 14px; height: 14px; }
+      .reply-body-input { font-size: 16px; }
+      .reply-thread { margin-left: 12px; padding-left: 10px; }
+      .nested-thread { margin-left: 10px; padding-left: 8px; }
+
+      .owner-delete { font-size: 10.5px; padding: 4px 8px; }
+      .report-btn, .pin-btn { padding: 6px; }
+      .report-btn svg, .pin-btn svg { width: 14px; height: 14px; }
+
+      /* Prevent body scroll when the mobile reply sheet is open */
+      body.mobile-reply-open { overflow: hidden; }
+      body.replies-overlay-open { overflow: hidden; }
+
+      /* Replies overlay — mobile only, YouTube-style dedicated thread view */
+      .replies-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        animation: repliesOverlaySlideIn 0.18s ease-out;
+      }
+      @keyframes repliesOverlaySlideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+      }
+      .replies-overlay-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        padding-top: calc(16px + env(safe-area-inset-top, 0px));
+        border-bottom: 1px solid var(--border2);
+        flex-shrink: 0;
+        background: var(--bg2);
+      }
+      .replies-overlay-back {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--ink);
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+      }
+      .replies-overlay-title {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 18px;
+        color: var(--ink);
+      }
+      .replies-overlay-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px;
+        padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+        -webkit-overflow-scrolling: touch;
+        transition: padding-bottom 0.15s ease;
+      }
+      /* Keep the last reply fully visible above the docked compose bar, not hidden behind it */
+      body.mobile-reply-open .replies-overlay-scroll {
+        padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+      }
+      .replies-overlay-note {
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+      }
+      .replies-overlay-note .note-body { margin-top: 6px; }
+
+      /* Mobile reply sheet — docked to the bottom of the screen, YouTube-style */
+      .mobile-reply-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 80;
+        background: var(--bg2);
+        border-top: 1px solid var(--border3);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+        padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+        animation: mobileReplySheetUp 0.18s ease-out;
+      }
+      @keyframes mobileReplySheetUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      .mobile-reply-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .mobile-reply-label {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink3);
+      }
+      .mobile-reply-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 1;
+        color: var(--ink3);
+        padding: 4px 6px;
+      }
+      .mobile-reply-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .mobile-reply-input {
+        flex: 1;
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.4;
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--border3);
+        border-radius: 18px;
+        padding: 10px 16px;
+        resize: none;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .mobile-reply-input:focus { outline: none; border-color: var(--accent); }
+      .mobile-reply-send {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: none;
+        background: var(--accent);
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mobile-reply-send:disabled { opacity: 0.5; }
+    }
+
+    /* ── REPLY THREAD ── */
+    .reply-thread {
+      margin-left: 20px;
+      border-left: 1.5px solid var(--border3);
+      padding-left: 14px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .reply-block {
+      padding: 10px 0 4px;
+      border-top: 1px solid var(--border2);
+    }
+    .reply-block:first-child { border-top: none; padding-top: 2px; }
+    .reply-meta {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+      margin-bottom: 5px;
+    }
+    .reply-name {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 9px;
+      color: var(--ink);
+      line-height: 1.35;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .reply-time {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--ink3);
+    }
+    .reply-body {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--ink);
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      margin-bottom: 6px;
+    }
+    .reply-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-transform: uppercase;
+    }
+    .reply-btn:hover { opacity: 0.7; }
+    .reply-btn-row { display: flex; gap: 0; align-items: center; margin-top: 4px; }
+    .reply-btn-row .reply-report-btn,
+    .reply-btn-row .owner-delete {
+      margin-left: auto;
+    }
+    .nested-thread {
+      margin-left: 14px;
+      border-left: 1.5px solid var(--border2);
+      padding-left: 12px;
+      margin-top: 4px;
+    }
+    /* reply compose box */
+    .reply-compose {
+      margin-top: 8px;
+      padding: 8px 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .reply-compose-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .reply-nick-input {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 13px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border3);
+      outline: none;
+      color: var(--ink);
+      padding: 3px 0;
+      width: 130px;
+      flex-shrink: 0;
+    }
+    .reply-nick-input::placeholder { color: var(--ink3); font-style: italic; }
+    .reply-body-input {
+      font-family: var(--sans);
+      font-size: 13px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border3);
+      outline: none;
+      color: var(--ink);
+      padding: 3px 0;
+      flex: 1;
+      resize: none;
+      min-height: 28px;
+    }
+    .reply-body-input::placeholder { color: var(--ink3); }
+    .reply-submit-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+    .reply-submit-btn:hover { opacity: 0.7; }
+    .reply-toggle-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-transform: uppercase;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .reply-toggle-btn:hover { opacity: 0.7; }
+    .reply-report-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink3);
+      background: none;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 3px;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: color 0.12s, background 0.12s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .reply-report-btn:hover { color: var(--accent); }
+    }
+    .reply-report-btn.reported { color: #dc2626; cursor: pointer; }
+    @media (hover: hover) and (pointer: fine) {
+      .reply-report-btn.reported:hover { color: var(--ink2); }
+    }
+    .reply-location {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--ink3);
+    }
+    .reply-dot {
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: var(--ink3);
+      flex-shrink: 0;
+      display: inline-block;
+      align-self: center;
+    }
+    .replies-closed-notice {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--ink3);
+      text-transform: uppercase;
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: var(--bg3);
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* Nickname lock flow */
+    .compose-first-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(216,90,48,0.2);
+      border-radius: 20px;
+      padding: 3px 9px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .compose-name-hint {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--ink3);
+      letter-spacing: 0.04em;
+      margin-top: -6px;
+      margin-bottom: 10px;
+    }
+    .compose-locked-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .compose-locked-name {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .compose-locked-pill {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--ink3);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .compose-change-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border3);
+      background: transparent;
+      color: var(--ink2);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .compose-change-btn:hover { background: var(--bg3); }
+    .compose-changing-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--bg3);
+      color: var(--ink3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 9px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .compose-save-btn {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border3);
+      background: transparent;
+      color: var(--ink2);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .compose-save-btn:hover { background: var(--bg3); }
+    @media (max-width: 600px) {
+      .compose-locked-name { font-size: 15px; }
+      .compose-change-btn, .compose-save-btn { font-size: 9px; padding: 4px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MOBILE HEADER (only visible on small screens) -->
+<div class="mobile-header">
+  <div class="mobile-logo">Daily<em>Quickie</em></div>
+  <div class="mobile-tagline-center">as much as we all love it long,<br>let's keep it quick over here</div>
+  <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" onclick="toggleDrawer()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+
+<!-- OWNER LOGIN (hidden unless opened via ?owner=login) -->
+<div class="owner-login-overlay" id="ownerLoginOverlay" style="display:none;">
+  <div class="owner-login-box">
+    <div class="owner-login-title">owner login</div>
+    <input class="name-input" id="ownerEmailInput" type="email" placeholder="email" autocomplete="username" />
+    <input class="name-input" id="ownerPasswordInput" type="password" placeholder="password" autocomplete="current-password" />
+    <div class="error-msg" id="ownerLoginError"></div>
+    <div class="owner-login-actions">
+      <button class="compose-save-btn" id="ownerLoginBtn" onclick="ownerLogin()">log in</button>
+      <button class="compose-change-btn" onclick="closeOwnerLogin()">cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">Daily<em>Quickie</em></div>
+    <div class="tagline">as much as we all love it long,<br>let's keep it quick over here</div>
+
+    <!-- QUOTE OF THE DAY (mobile drawer only) -->
+    <div class="quote-sidebar" id="quoteSidebar" style="display:none;">
+      <div class="quote-sidebar-lbl" id="quoteSidebarLbl">today's quote</div>
+      <div class="quote-sidebar-text" id="quoteSidebarText"></div>
+      <div class="quote-sidebar-sig">— AJD</div>
+    </div>
+
+    <div class="section-label">Archive</div>
+    <div id="archiveTree"></div>
+
+    <div class="section-label" id="pastPromptsLabel" style="display:none;">Past prompts</div>
+    <div id="pastPromptsList"></div>
+
+    <div class="sidebar-foot">
+      <div class="reach-label">Reach AJD</div>
+      <div class="reach-text">loved something? hated something? got a prompt in mind? tell me.</div>
+      <a class="reach-email" href="mailto:davidaj181298@gmail.com">davidaj181298@gmail.com</a>
+      <div class="total-count" id="totalCount">loading…</div>
+      <div id="ownerLogoutRow" style="margin-top:8px;">
+        <button class="compose-change-btn" onclick="ownerLogout()">log out (owner)</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-header">
+      <div class="main-header-title">
+        <div class="main-title" id="mainTitle"></div>
+        <div class="main-stats" id="mainStats"></div>
+      </div>
+
+      <!-- QUOTE OF THE DAY (desktop top bar — label + text + signature) -->
+      <div class="quote-topbox" id="quoteTopbox" style="display:none;">
+        <div class="quote-topbox-lbl" id="quoteTopboxLbl">today's quote</div>
+        <div class="quote-topbox-text" id="quoteTopboxText"></div>
+        <div class="quote-topbox-sig">— AJD</div>
+      </div>
+
+      <div class="header-pills">
+        <div class="reports-pill" id="reportsPill" style="display:none;">
+          <div class="reports-pill-num" id="reportsPillNum">0</div>
+          <div class="reports-pill-lbl">reports</div>
+        </div>
+        <div class="today-pill">
+          <div class="today-pill-top" id="todayLblTop">day</div>
+          <div class="today-pill-num" id="todayCount">0</div>
+          <div class="today-pill-lbl" id="todayLbl">of the year</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-scroll">
+      <div class="main-scroll-inner">
+      <!-- PROMPT -->
+      <div class="prompt-block" id="promptBlock" style="display:none;">
+        <div class="prompt-label-row">
+          <div class="prompt-dot"></div>
+          <span class="prompt-label" id="promptLabel">Today's prompt · from AJD</span>
+        </div>
+        <div class="prompt-text" id="promptText"></div>
+        <div class="prompt-hint">answer below, or post whatever's on your mind</div>
+      </div>
+
+      <!-- COMPOSE -->
+      <div class="compose" id="composeBlock">
+        <!-- Nickname: first-time, locked, or changing — one of these shown at a time -->
+        <div id="nickFirstRow" style="display:none;">
+          <div class="compose-first-badge">first time</div>
+          <div class="compose-row">
+            <span class="compose-lbl">your name</span>
+            <input class="name-input" id="nickInputFirst" type="text" placeholder="pick a nickname" maxlength="30" autocomplete="off" />
+            <button class="compose-save-btn" onclick="saveFirstNick()">save</button>
+          </div>
+          <div class="compose-name-hint">this will be your name every time you post, leave it blank to stay anonymous, you can change it later</div>
+        </div>
+        <div id="nickLockedRow" class="compose-locked-row" style="display:none;">
+          <span class="compose-lbl">your name</span>
+          <span class="compose-locked-name" id="nickLockedDisplay"></span>
+          <span class="compose-locked-pill">locked</span>
+          <button class="compose-change-btn" onclick="startChangingNick()">change</button>
+        </div>
+        <div id="nickChangingRow" style="display:none;">
+          <div class="compose-changing-badge">changing name</div>
+          <div class="compose-row">
+            <span class="compose-lbl">your name</span>
+            <input class="name-input" id="nickInputChanging" type="text" maxlength="30" autocomplete="off" />
+            <button class="compose-save-btn" onclick="saveChangedNick()">save</button>
+          </div>
+        </div>
+        <div class="compose-row">
+          <span class="compose-lbl">posting from</span>
+          <span class="location-tag" id="locationTag">detecting…</span>
+        </div>
+        <textarea class="note-ta" id="noteBody" placeholder="rant, drop an insight, say whatever's on your mind. anything goes. just keep it a quickie."></textarea>
+        <div class="nudge-warning" id="nudgeWarning"></div>
+        <div class="error-msg" id="errorMsg"></div>
+        <div class="compose-foot">
+          <label class="prompt-toggle hidden" id="promptToggleWrap">
+            <input type="checkbox" id="onPromptCheckbox" />
+            <span class="prompt-toggle-text">answering today's prompt</span>
+          </label>
+          <button class="post-btn" id="postBtn" onclick="postNote()">post it →</button>
+        </div>
+      </div>
+
+      <!-- PAST DAY NOTICE (shown when viewing an archived day) -->
+      <div class="past-day-notice" id="pastDayNotice" style="display:none;">
+        <div class="past-day-notice-text">
+          <em>just reading today.</em> got something to say? post it on today's page.
+        </div>
+        <button class="past-day-notice-btn" id="goToTodayBtn">back to today →</button>
+      </div>
+
+      <!-- FEED HEADER + FILTER -->
+      <div class="feed-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="feed-lbl" id="feedLabel">notes from today</div>
+          <span class="flagged-first-badge" id="flaggedFirstBadge" style="display:none;">flagged first</span>
+        </div>
+        <div class="filter-group" id="filterGroup">
+          <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">all · <span id="countAll">0</span></button>
+          <button class="filter-btn" data-filter="on" onclick="setFilter('on')">on prompt · <span id="countOn">0</span></button>
+          <button class="filter-btn" data-filter="off" onclick="setFilter('off')">off prompt · <span id="countOff">0</span></button>
+        </div>
+      </div>
+
+      <!-- FEED -->
+      <div id="feed"><div class="loading-state">loading notes…</div></div>
+      </div><!-- end main-scroll-inner -->
+
+      <!-- FULL-WIDTH DIVIDER + FOOTER (edge-to-edge line, centered content) -->
+      <div class="site-footer-line"></div>
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="site-footer-left">
+            <div class="site-footer-logo">Daily<em>Quickie</em></div>
+            <div class="site-footer-byline">made in Melbourne · by AJD</div>
+          </div>
+          <div class="site-footer-tag">keep it a quickie over here</div>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── OWNER MODE ──
+// Real login (Supabase Auth), not a secret baked into the page source. Owner-only
+// actions (delete note/reply, quote management) are enforced by the database itself
+// via row-level security tied to this login — the client-side isOwner flag below only
+// controls which buttons/UI show up, it's not what's actually keeping anyone out.
+let isOwner = false;
+
+function openOwnerLogin() {
+  const overlay = document.getElementById('ownerLoginOverlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+function closeOwnerLogin() {
+  const overlay = document.getElementById('ownerLoginOverlay');
+  if (overlay) overlay.style.display = 'none';
+  const errEl = document.getElementById('ownerLoginError');
+  if (errEl) errEl.textContent = '';
+  const clean = window.location.pathname + window.location.hash;
+  window.history.replaceState({}, '', clean);
+}
+async function ownerLogin() {
+  const emailEl = document.getElementById('ownerEmailInput');
+  const passEl = document.getElementById('ownerPasswordInput');
+  const errEl = document.getElementById('ownerLoginError');
+  const btn = document.getElementById('ownerLoginBtn');
+  const email = emailEl ? emailEl.value.trim() : '';
+  const password = passEl ? passEl.value : '';
+  if (errEl) errEl.textContent = '';
+  if (!email || !password) {
+    if (errEl) errEl.textContent = 'enter both email and password';
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'logging in…'; }
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  if (btn) { btn.disabled = false; btn.textContent = 'log in'; }
+  if (error) {
+    if (errEl) errEl.textContent = 'login failed — check your email and password';
+    return;
+  }
+  closeOwnerLogin();
+}
+async function ownerLogout() {
+  await db.auth.signOut();
+}
+function applyOwnerMode(on) {
+  const changed = isOwner !== on;
+  isOwner = on;
+  document.documentElement.classList.toggle('owner-mode', on);
+  const logoutRow = document.getElementById('ownerLogoutRow');
+  if (logoutRow) logoutRow.style.display = on ? '' : 'none';
+  if (changed) {
+    // Owner status flipped — redraw anything that shows/hides owner-only controls
+    renderFeed();
+    loadAllReplies();
+    buildArchive();
+  }
+}
+(async function initOwnerAuth() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('owner') === 'login') openOwnerLogin();
+
+  const { data } = await db.auth.getSession();
+  applyOwnerMode(!!(data && data.session));
+
+  db.auth.onAuthStateChange((_event, session) => {
+    applyOwnerMode(!!session);
+  });
+})();
+
+// ── DRAWER TOGGLE (mobile) ──
+function toggleDrawer() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('drawerOverlay');
+  const burger = document.getElementById('hamburgerBtn');
+  const isOpen = sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  burger.classList.toggle('open', !isOpen);
+  document.body.classList.toggle('drawer-open', !isOpen);
+  burger.setAttribute('aria-label', !isOpen ? 'Close menu' : 'Open menu');
+}
+
+// ── ICONS (used by pin + report buttons, icon-only per design) ──
+const ICON_PIN = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M16,12V4h1V2H7v2h1v8l-2,2v2h5.2v6h1.6v-6H18v-2L16,12z"/></svg>';
+const ICON_FLAG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M14.4,6L14,4H5v17h2v-7h6.6l0.4,2h7V6H14.4z"/></svg>';
+
+// ── REPORT STATE ──
+// Track which notes the current viewer has reported in this browser (prevent double-reports)
+const reportedLocal = new Set(JSON.parse(localStorage.getItem('dq_reported') || '[]'));
+function markReportedLocal(id) {
+  reportedLocal.add(id);
+  localStorage.setItem('dq_reported', JSON.stringify([...reportedLocal]));
+}
+function unmarkReportedLocal(id) {
+  reportedLocal.delete(id);
+  localStorage.setItem('dq_reported', JSON.stringify([...reportedLocal]));
+}
+
+// ── PIN STATE ──
+// Personal, browser-only bookmarking — pinned notes float to the top whenever this
+// browser views the day they belong to. Nothing is shared with other people or synced
+// across devices; it's just localStorage, same as the nickname system.
+const pinnedLocal = new Set(JSON.parse(localStorage.getItem('dq_pinned') || '[]'));
+
+// Which nested reply threads are currently expanded — in-memory only (not saved across visits).
+// The reply tree gets fully rebuilt every time someone posts, deletes, or reports a reply, and
+// without this, every nested thread you had open would snap back to collapsed on every rebuild.
+const expandedRepliesLocal = new Set();
+function togglePinNote(id) {
+  if (pinnedLocal.has(id)) {
+    pinnedLocal.delete(id);
+  } else {
+    pinnedLocal.add(id);
+  }
+  localStorage.setItem('dq_pinned', JSON.stringify([...pinnedLocal]));
+  renderFeed();
+  loadAllReplies();
+}
+
+// ── MY NOTES STATE ──
+// Tracks which notes THIS browser posted (not by nickname — anonymous posters share a
+// name, so nickname matching would wrongly group everyone's anonymous notes together).
+// Used purely for personal sort priority; nothing here is shared with anyone else.
+const myNotesLocal = new Set(JSON.parse(localStorage.getItem('dq_my_notes') || '[]'));
+function markMyNoteLocal(id) {
+  myNotesLocal.add(id);
+  localStorage.setItem('dq_my_notes', JSON.stringify([...myNotesLocal]));
+}
+
+// Same idea, for replies — used so a note's own replies can be sorted with the
+// same preference the main feed already uses: yours first, then most replies, then recent.
+const myRepliesLocal = new Set(JSON.parse(localStorage.getItem('dq_my_replies') || '[]'));
+function markMyReplyLocal(id) {
+  myRepliesLocal.add(id);
+  localStorage.setItem('dq_my_replies', JSON.stringify([...myRepliesLocal]));
+}
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MELBOURNE_TZ = 'Australia/Melbourne';
+
+let selectedYear, selectedMonth, selectedDay;
+let expandedYears = new Set();   // years currently expanded in archive tree
+let expandedMonths = new Set();  // months currently expanded (format: "YYYY-M")
+let archiveData = {};
+let userCity = 'somewhere';
+let userCountry = '';
+let currentFilter = 'all';
+let currentNotes = [];
+
+// ── DATE HELPERS ──
+// The single global "today" used everywhere the app decides which day is currently
+// open — anchored to Melbourne's clock, same as the prompt itself, so every visitor
+// worldwide sees the compose box open/close at the same real-world moment regardless
+// of their own timezone. (This used to read the visitor's own device clock instead,
+// which meant people ahead of or behind Melbourne could get cut off early or blocked
+// from a prompt that was actually still live, depending on where they lived.)
+function todayLocal() {
+  const parts = todayMelbourne().split('-');
+  return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10), day: parseInt(parts[2], 10) };
+}
+
+// Melbourne-local "today" (for prompt lookup)
+function todayMelbourne() {
+  const d = new Date();
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: MELBOURNE_TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+  const parts = fmt.formatToParts(d);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${day}`; // YYYY-MM-DD
+}
+
+// Format time like "2:14 pm"
+function fmtTime(iso) {
+  const d = new Date(iso);
+  let h = d.getHours(), ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return h + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ampm;
+}
+
+// "2:14 pm" for today, or "Apr 17 · 2:14 pm" for any other day
+// Every note on a given page already shares the day shown in the header above the feed,
+// so the note's own timestamp never needs to repeat the date — just the time.
+function fmtNoteTime(iso) {
+  return fmtTime(iso);
+}
+
+// ── DETECT LOCATION ──
+// Tries multiple services so we're not stuck if one is slow or down.
+// Ordered by expected city-level accuracy, most accurate first.
+async function tryLocationService(url, parseFn, timeoutMs = 4000) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return parseFn(data);
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── COUNTRY CODE: 2-letter → 3-letter (ISO 3166-1 alpha-3) ──
+// Comprehensive list so no country shows as just its 2-letter code.
+const COUNTRY_CODE_3 = {
+  AD:'AND',AE:'ARE',AF:'AFG',AG:'ATG',AI:'AIA',AL:'ALB',AM:'ARM',AO:'AGO',AQ:'ATA',AR:'ARG',
+  AS:'ASM',AT:'AUT',AU:'AUS',AW:'ABW',AX:'ALA',AZ:'AZE',BA:'BIH',BB:'BRB',BD:'BGD',BE:'BEL',
+  BF:'BFA',BG:'BGR',BH:'BHR',BI:'BDI',BJ:'BEN',BL:'BLM',BM:'BMU',BN:'BRN',BO:'BOL',BQ:'BES',
+  BR:'BRA',BS:'BHS',BT:'BTN',BV:'BVT',BW:'BWA',BY:'BLR',BZ:'BLZ',CA:'CAN',CC:'CCK',CD:'COD',
+  CF:'CAF',CG:'COG',CH:'CHE',CI:'CIV',CK:'COK',CL:'CHL',CM:'CMR',CN:'CHN',CO:'COL',CR:'CRI',
+  CU:'CUB',CV:'CPV',CW:'CUW',CX:'CXR',CY:'CYP',CZ:'CZE',DE:'DEU',DJ:'DJI',DK:'DNK',DM:'DMA',
+  DO:'DOM',DZ:'DZA',EC:'ECU',EE:'EST',EG:'EGY',EH:'ESH',ER:'ERI',ES:'ESP',ET:'ETH',FI:'FIN',
+  FJ:'FJI',FK:'FLK',FM:'FSM',FO:'FRO',FR:'FRA',GA:'GAB',GB:'GBR',GD:'GRD',GE:'GEO',GF:'GUF',
+  GG:'GGY',GH:'GHA',GI:'GIB',GL:'GRL',GM:'GMB',GN:'GIN',GP:'GLP',GQ:'GNQ',GR:'GRC',GS:'SGS',
+  GT:'GTM',GU:'GUM',GW:'GNB',GY:'GUY',HK:'HKG',HM:'HMD',HN:'HND',HR:'HRV',HT:'HTI',HU:'HUN',
+  ID:'IDN',IE:'IRL',IL:'ISR',IM:'IMN',IN:'IND',IO:'IOT',IQ:'IRQ',IR:'IRN',IS:'ISL',IT:'ITA',
+  JE:'JEY',JM:'JAM',JO:'JOR',JP:'JPN',KE:'KEN',KG:'KGZ',KH:'KHM',KI:'KIR',KM:'COM',KN:'KNA',
+  KP:'PRK',KR:'KOR',KW:'KWT',KY:'CYM',KZ:'KAZ',LA:'LAO',LB:'LBN',LC:'LCA',LI:'LIE',LK:'LKA',
+  LR:'LBR',LS:'LSO',LT:'LTU',LU:'LUX',LV:'LVA',LY:'LBY',MA:'MAR',MC:'MCO',MD:'MDA',ME:'MNE',
+  MF:'MAF',MG:'MDG',MH:'MHL',MK:'MKD',ML:'MLI',MM:'MMR',MN:'MNG',MO:'MAC',MP:'MNP',MQ:'MTQ',
+  MR:'MRT',MS:'MSR',MT:'MLT',MU:'MUS',MV:'MDV',MW:'MWI',MX:'MEX',MY:'MYS',MZ:'MOZ',NA:'NAM',
+  NC:'NCL',NE:'NER',NF:'NFK',NG:'NGA',NI:'NIC',NL:'NLD',NO:'NOR',NP:'NPL',NR:'NRU',NU:'NIU',
+  NZ:'NZL',OM:'OMN',PA:'PAN',PE:'PER',PF:'PYF',PG:'PNG',PH:'PHL',PK:'PAK',PL:'POL',PM:'SPM',
+  PN:'PCN',PR:'PRI',PS:'PSE',PT:'PRT',PW:'PLW',PY:'PRY',QA:'QAT',RE:'REU',RO:'ROU',RS:'SRB',
+  RU:'RUS',RW:'RWA',SA:'SAU',SB:'SLB',SC:'SYC',SD:'SDN',SE:'SWE',SG:'SGP',SH:'SHN',SI:'SVN',
+  SJ:'SJM',SK:'SVK',SL:'SLE',SM:'SMR',SN:'SEN',SO:'SOM',SR:'SUR',SS:'SSD',ST:'STP',SV:'SLV',
+  SX:'SXM',SY:'SYR',SZ:'SWZ',TC:'TCA',TD:'TCD',TF:'ATF',TG:'TGO',TH:'THA',TJ:'TJK',TK:'TKL',
+  TL:'TLS',TM:'TKM',TN:'TUN',TO:'TON',TR:'TUR',TT:'TTO',TV:'TUV',TW:'TWN',TZ:'TZA',UA:'UKR',
+  UG:'UGA',UM:'UMI',US:'USA',UY:'URY',UZ:'UZB',VA:'VAT',VC:'VCT',VE:'VEN',VG:'VGB',VI:'VIR',
+  VN:'VNM',VU:'VUT',WF:'WLF',WS:'WSM',XK:'XKX',YE:'YEM',YT:'MYT',ZA:'ZAF',ZM:'ZMB',ZW:'ZWE'
+};
+// Convert a 2-letter code (or already-3-letter) to 3-letter, uppercased. Unknown → return as-is.
+function toAlpha3(code) {
+  if (!code) return '';
+  const up = code.toUpperCase().trim();
+  if (up.length === 3) return up; // Already alpha-3
+  return COUNTRY_CODE_3[up] || up;
+}
+
+async function detectLocation() {
+  // Try 1: freeipapi.com — HTTPS, no signup, city-level, 60 req/min
+  let loc = await tryLocationService(
+    'https://freeipapi.com/api/json/',
+    d => d && d.cityName ? {
+      city: d.cityName,
+      country: toAlpha3(d.countryCode || d.countryName || '')
+    } : null
+  );
+
+  // Try 2: iplocate.io — HTTPS, free tier, city-accurate
+  if (!loc) {
+    loc = await tryLocationService(
+      'https://www.iplocate.io/api/lookup/',
+      d => d && d.city ? {
+        city: d.city,
+        country: toAlpha3(d.country_code || d.country || '')
+      } : null
+    );
+  }
+
+  // Try 3: ipwho.is — HTTPS, reliable fallback
+  if (!loc) {
+    loc = await tryLocationService(
+      'https://ipwho.is/',
+      d => d && d.success && d.city ? {
+        city: d.city,
+        country: toAlpha3(d.country_code || '')
+      } : null
+    );
+  }
+
+  // Try 4: ipapi.co — HTTPS, has country_code_iso3 field directly
+  if (!loc) {
+    loc = await tryLocationService(
+      'https://ipapi.co/json/',
+      d => d && d.city ? {
+        city: d.city,
+        country: d.country_code_iso3 || toAlpha3(d.country_code || d.country || '')
+      } : null
+    );
+  }
+
+  // Try 5: ipinfo.io — HTTPS, last resort
+  if (!loc) {
+    loc = await tryLocationService(
+      'https://ipinfo.io/json',
+      d => d && d.city ? {
+        city: d.city,
+        country: toAlpha3(d.country || '')
+      } : null
+    );
+  }
+
+  if (loc) {
+    userCity = loc.city;
+    userCountry = loc.country;
+  } else {
+    userCity = '';
+    userCountry = '';
+  }
+
+  const tag = document.getElementById('locationTag');
+  if (userCity) {
+    tag.textContent = userCountry ? `${userCity}, ${userCountry}` : userCity;
+  } else {
+    tag.textContent = 'location unknown';
+  }
+}
+
+
+// ── RANDOM ID HELPER ──
+// Shared by the device tag (below) and the nickname ownership token (further down) —
+// both just need a random, unguessable string; neither is a login or personal info.
+function generateRandomId() {
+  if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// ── DEVICE TAG ──
+// A random, non-secret identifier for this browser. Used only to stop the same browser
+// from spamming report counts or bypassing the posting rate limit — not a login, not
+// shared with anyone, carries no personal info, and is sent openly with those requests.
+const DQ_DEVICE_ID_KEY = 'dq_device_id';
+function getDeviceId() {
+  let id = localStorage.getItem(DQ_DEVICE_ID_KEY);
+  if (!id) {
+    id = generateRandomId();
+    localStorage.setItem(DQ_DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+// ── NICKNAME LOCK FLOW ──
+const DQ_NICK_KEY = 'dq_nickname';
+const DQ_NICK_LOCKED_KEY = 'dq_nickname_locked';
+// Proves to the server that THIS browser is the one that claimed a given nickname, so it
+// (and only it) can release that name later when switching to a new one. Generated fresh
+// each time a name is claimed; never shown to the person, never sent anywhere except the
+// one claim/release call it belongs to.
+const DQ_NICK_OWNER_TOKEN_KEY = 'dq_nickname_owner_token';
+const _adjectives = ['sleepy','hungry','quiet','breezy','cloudy','lucky','fuzzy','grumpy','sunny','chilly','jumpy','moody','spicy','gentle','sneaky','clumsy','witty','lanky','dizzy','bold'];
+const _nouns = ['koala','mango','pelican','walrus','biscuit','dingo','noodle','cactus','sparrow','pebble','platypus','avocado','tangerine','ferret','wombat','radish','gecko','kumquat','possum','turnip'];
+function generateNickname() {
+  const a = _adjectives[Math.floor(Math.random() * _adjectives.length)];
+  const n = _nouns[Math.floor(Math.random() * _nouns.length)];
+  return a + '-' + n;
+}
+
+// Reserves a nickname in the shared `nicknames` table so no two people can use the same one.
+// Case-insensitive: "Sleepy-Koala" and "sleepy-koala" are treated as the same claim.
+// Returns { ok: true } if claimed, or { ok: false, reason } if it's taken / something failed.
+async function claimNickname(nickname) {
+  const key = nickname.trim().toLowerCase();
+  if (!key || key === 'anonymous') return { ok: true }; // shared name, never exclusively reserved
+  const token = generateRandomId();
+  try {
+    const { error } = await db
+      .from('nicknames')
+      .insert([{ nickname_key: key, display: nickname.trim(), owner_token: token }]);
+    if (error) {
+      if (error.code === '23505') { // unique_violation
+        return { ok: false, reason: 'that nickname is already taken — try another' };
+      }
+      console.error(error);
+      return { ok: false, reason: 'could not check that nickname — try again' };
+    }
+    // Claimed successfully — remember our own token so we (and only we) can release
+    // this exact name later if we switch away from it.
+    localStorage.setItem(DQ_NICK_OWNER_TOKEN_KEY, token);
+    return { ok: true };
+  } catch (e) {
+    console.error(e);
+    return { ok: false, reason: 'could not check that nickname — try again' };
+  }
+}
+
+// Frees up a previously-claimed nickname so it goes back into the pool for anyone
+// (including this same browser) to claim again. Requires the exact ownership token
+// issued when that name was claimed — without it, the server just does nothing.
+async function releaseNickname(nicknameKey, token) {
+  if (!nicknameKey || nicknameKey === 'anonymous' || !token) return;
+  try {
+    await db.rpc('release_nickname', { key: nicknameKey, token: token });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// One-time best-effort backfill: if this browser already has a locked nickname from before
+// the reservation system existed, quietly register it so it's officially reserved going forward.
+// If someone else already grabbed the same name in the meantime, we don't force a rename —
+// we just leave it as-is; nothing changes for this browser either way.
+async function ensureNicknameClaimed() {
+  const saved = localStorage.getItem(DQ_NICK_KEY);
+  const locked = localStorage.getItem(DQ_NICK_LOCKED_KEY) === 'true';
+  if (!saved || !locked) return;
+  await claimNickname(saved);
+
+  // If this browser doesn't have an ownership token yet, this nickname was likely
+  // claimed before the release-and-reclaim system existed. Try to sign it now — this
+  // only succeeds if nobody (including a previous version of this same flow) has
+  // already signed that row, so it can never steal a name that's genuinely someone else's.
+  const key = saved.trim().toLowerCase();
+  if (key && key !== 'anonymous' && !localStorage.getItem(DQ_NICK_OWNER_TOKEN_KEY)) {
+    const token = generateRandomId();
+    try {
+      const { data, error } = await db.rpc('claim_owner_token', { key: key, new_token: token });
+      if (!error && data === true) {
+        localStorage.setItem(DQ_NICK_OWNER_TOKEN_KEY, token);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+}
+
+function initNickname() {
+  const saved = localStorage.getItem(DQ_NICK_KEY);
+  const locked = localStorage.getItem(DQ_NICK_LOCKED_KEY) === 'true';
+  const firstRow = document.getElementById('nickFirstRow');
+  const lockedRow = document.getElementById('nickLockedRow');
+  const changingRow = document.getElementById('nickChangingRow');
+  if (!firstRow) return;
+
+  if (saved && locked) {
+    firstRow.style.display = 'none';
+    lockedRow.style.display = 'flex';
+    changingRow.style.display = 'none';
+    document.getElementById('nickLockedDisplay').textContent = saved;
+  } else {
+    firstRow.style.display = '';
+    lockedRow.style.display = 'none';
+    changingRow.style.display = 'none';
+    const input = document.getElementById('nickInputFirst');
+    if (input) input.value = saved || '';
+  }
+}
+
+function startChangingNick() {
+  const saved = localStorage.getItem(DQ_NICK_KEY) || '';
+  document.getElementById('nickFirstRow').style.display = 'none';
+  document.getElementById('nickLockedRow').style.display = 'none';
+  const changingRow = document.getElementById('nickChangingRow');
+  changingRow.style.display = '';
+  const input = document.getElementById('nickInputChanging');
+  if (input) { input.value = saved; input.focus(); }
+}
+
+// Lets someone claim + lock their nickname right away on first use, instead of only
+// finding out it's taken after they've already written out a whole note and hit post.
+async function saveFirstNick() {
+  const input = document.getElementById('nickInputFirst');
+  const val = input ? input.value.trim() : '';
+  const errorEl = document.getElementById('errorMsg');
+  const saveBtn = document.querySelector('#nickFirstRow .compose-save-btn');
+  if (errorEl) errorEl.textContent = '';
+
+  if (val) {
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'checking…'; }
+    const claim = await claimNickname(val);
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'save'; }
+    if (!claim.ok) {
+      if (errorEl) errorEl.textContent = claim.reason;
+      return;
+    }
+  }
+
+  lockNicknameAfterPost(val || 'anonymous');
+}
+
+async function saveChangedNick() {
+  const input = document.getElementById('nickInputChanging');
+  const val = input ? input.value.trim() : '';
+  const errorEl = document.getElementById('errorMsg');
+  const saveBtn = document.querySelector('#nickChangingRow .compose-save-btn');
+  if (errorEl) errorEl.textContent = '';
+
+  const finalVal = val || 'anonymous';
+
+  // If it's the same nickname they already have locked, no need to re-claim it
+  const current = (localStorage.getItem(DQ_NICK_KEY) || '').trim().toLowerCase();
+  // Capture the old ownership token BEFORE claiming the new name — claiming overwrites
+  // this same localStorage key with a fresh token for the new name, so the old one has
+  // to be grabbed first or there'd be nothing left to release the old name with.
+  const oldToken = localStorage.getItem(DQ_NICK_OWNER_TOKEN_KEY);
+  if (finalVal.toLowerCase() !== current) {
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'checking…'; }
+    const claim = await claimNickname(finalVal);
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'save'; }
+    if (!claim.ok) {
+      if (errorEl) errorEl.textContent = claim.reason;
+      return;
+    }
+    // Successfully switched to a new name — free up the old one so it goes back into
+    // the pool (for this browser to reuse later, or for anyone else).
+    await releaseNickname(current, oldToken);
+  }
+
+  localStorage.setItem(DQ_NICK_KEY, finalVal);
+  localStorage.setItem(DQ_NICK_LOCKED_KEY, 'true');
+  document.getElementById('nickLockedDisplay').textContent = finalVal;
+  document.getElementById('nickChangingRow').style.display = 'none';
+  document.getElementById('nickLockedRow').style.display = 'flex';
+}
+
+function getNicknameForPost() {
+  const locked = localStorage.getItem(DQ_NICK_LOCKED_KEY) === 'true';
+  const changingRow = document.getElementById('nickChangingRow');
+  const isChanging = changingRow && changingRow.style.display !== 'none';
+  if (locked && !isChanging) {
+    return localStorage.getItem(DQ_NICK_KEY) || '';
+  }
+  if (isChanging) {
+    const input = document.getElementById('nickInputChanging');
+    return input ? input.value.trim() : '';
+  }
+  const input = document.getElementById('nickInputFirst');
+  return input ? input.value.trim() : '';
+}
+
+function lockNicknameAfterPost(nickname) {
+  if (nickname) {
+    localStorage.setItem(DQ_NICK_KEY, nickname);
+    localStorage.setItem(DQ_NICK_LOCKED_KEY, 'true');
+    initNickname();
+  }
+}
+
+// ── LENGTH NUDGE (500 chars soft) ──
+document.addEventListener('DOMContentLoaded', () => {
+  initNickname();
+  ensureNicknameClaimed();
+  const ta = document.getElementById('noteBody');
+  const warn = document.getElementById('nudgeWarning');
+  ta.addEventListener('input', () => {
+    const len = ta.value.length;
+    if (len > 500) {
+      warn.textContent = `getting a little long — keep it a quickie 😉 (${len} chars)`;
+      warn.className = 'nudge-warning active';
+    } else {
+      warn.textContent = '';
+      warn.className = 'nudge-warning';
+    }
+  });
+});
+
+// ── CONTENT FILTER ──
+// Returns { ok: true } or { ok: false, reason: "..." }
+// All content filters removed per owner request. Report + delete handle moderation.
+// Only blocks empty content.
+
+function checkContent(text) {
+  const trimmed = (text || '').trim();
+  if (!trimmed) return { ok: false, reason: 'empty' };
+  return { ok: true };
+}
+
+// ── RATE LIMIT (15 sec between posts) ──
+const RATE_LIMIT_SECONDS = 15;
+let rateLimitInterval = null;
+
+function getLastPostTime() {
+  const t = localStorage.getItem('dq_last_post');
+  return t ? parseInt(t, 10) : 0;
+}
+function setLastPostTime() {
+  localStorage.setItem('dq_last_post', Date.now().toString());
+}
+function secondsUntilCanPost() {
+  const last = getLastPostTime();
+  if (!last) return 0;
+  const elapsed = Math.floor((Date.now() - last) / 1000);
+  return Math.max(0, RATE_LIMIT_SECONDS - elapsed);
+}
+function startRateLimitCountdown() {
+  const btn = document.getElementById('postBtn');
+  const errorEl = document.getElementById('errorMsg');
+  if (rateLimitInterval) clearInterval(rateLimitInterval);
+  const tick = () => {
+    const left = secondsUntilCanPost();
+    if (left <= 0) {
+      btn.classList.remove('waiting');
+      btn.disabled = false;
+      btn.textContent = 'post it →';
+      errorEl.textContent = '';
+      clearInterval(rateLimitInterval);
+      rateLimitInterval = null;
+      return;
+    }
+    btn.classList.add('waiting');
+    btn.disabled = true;
+    btn.textContent = `wait ${left}s…`;
+    errorEl.textContent = `take a breath — one more quickie in ${left}s`;
+  };
+  tick();
+  rateLimitInterval = setInterval(tick, 1000);
+}
+
+// ── LOAD TODAY'S PROMPT (Melbourne-local) ──
+// Tries today's prompt first; if none exists, falls back to the most recent past prompt
+// so the dark block never goes empty.
+let currentPromptDate = null; // YYYY-MM-DD of whichever prompt is showing
+
+// Helper: zero-pad to 2 digits
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+async function loadTodayPrompt() {
+  const today = todayMelbourne();
+  const block = document.getElementById('promptBlock');
+  const toggleWrap = document.getElementById('promptToggleWrap');
+  const labelEl = document.getElementById('promptLabel');
+  const composeBlock = document.getElementById('composeBlock');
+
+  currentPromptDate = null;
+
+  // Figure out which day the user is currently viewing
+  const t = todayLocal();
+  const viewYear = selectedYear || t.year;
+  const viewMonth = selectedMonth || t.month;
+  const viewDay = selectedDay || t.day;
+  const viewDate = `${viewYear}-${pad2(viewMonth)}-${pad2(viewDay)}`;
+  const viewingToday = (viewDate === today);
+
+  // Hide the compose block when browsing past days — can only post notes for today
+  if (composeBlock) {
+    composeBlock.style.display = viewingToday ? '' : 'none';
+  }
+
+  // Show a friendly notice when on a past day
+  const notice = document.getElementById('pastDayNotice');
+  if (notice) {
+    notice.style.display = viewingToday ? 'none' : 'flex';
+  }
+
+  try {
+    let promptRow = null;
+    let labelMode = 'today'; // 'today' | 'pastday' | 'fallback'
+
+    if (viewingToday) {
+      // Try today's prompt
+      const { data, error } = await db
+        .from('prompts')
+        .select('*')
+        .eq('prompt_date', today)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        promptRow = data[0];
+        labelMode = 'today';
+      } else {
+        // Fallback: most recent past prompt so the dark block doesn't go empty today
+        const past = await db
+          .from('prompts')
+          .select('*')
+          .lt('prompt_date', today)
+          .order('prompt_date', { ascending: false })
+          .limit(1);
+        if (!past.error && past.data && past.data.length > 0) {
+          promptRow = past.data[0];
+          labelMode = 'fallback';
+        }
+      }
+    } else {
+      // Viewing a past day — show only that day's prompt (or nothing if there was none)
+      const { data, error } = await db
+        .from('prompts')
+        .select('*')
+        .eq('prompt_date', viewDate)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        promptRow = data[0];
+        labelMode = 'pastday';
+      }
+    }
+
+    if (promptRow) {
+      document.getElementById('promptText').textContent = promptRow.prompt;
+      currentPromptDate = promptRow.prompt_date;
+      if (labelEl) {
+        if (labelMode === 'today') {
+          labelEl.textContent = "Today's prompt · from AJD";
+        } else if (labelMode === 'pastday') {
+          const parts = promptRow.prompt_date.split('-');
+          const dObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+          labelEl.textContent = `${MONTHS_SHORT[dObj.getMonth()]} ${dObj.getDate()}'s prompt · from AJD`;
+        } else {
+          const parts = promptRow.prompt_date.split('-');
+          const dObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+          labelEl.textContent = `${MONTHS_SHORT[dObj.getMonth()]} ${dObj.getDate()}'s prompt · still open`;
+        }
+      }
+      block.style.display = 'block';
+      // Only show the "answering today's prompt" toggle when we're actually on today
+      if (viewingToday) {
+        toggleWrap.classList.remove('hidden');
+      } else {
+        toggleWrap.classList.add('hidden');
+      }
+    } else {
+      block.style.display = 'none';
+      toggleWrap.classList.add('hidden');
+    }
+  } catch (e) {
+    block.style.display = 'none';
+    toggleWrap.classList.add('hidden');
+  }
+}
+
+// ── LOAD PAST PROMPTS (sidebar) ──
+async function loadPastPrompts() {
+  const today = todayMelbourne();
+  try {
+    const { data, error } = await db
+      .from('prompts')
+      .select('*')
+      .lt('prompt_date', today)
+      .order('prompt_date', { ascending: false })
+      .limit(3);
+
+    const label = document.getElementById('pastPromptsLabel');
+    const list = document.getElementById('pastPromptsList');
+    // Exclude the prompt currently shown at the top (if it's a past one being used as fallback)
+    // Then cap at 2 so the sidebar stays short
+    const filtered = (data || []).filter(p => p.prompt_date !== currentPromptDate).slice(0, 2);
+    if (!error && filtered.length > 0) {
+      label.style.display = 'block';
+      list.innerHTML = filtered.map(p => {
+        const parts = p.prompt_date.split('-');
+        const dateLabel = `${parts[2]}.${parts[1]}`;
+        const safe = (p.prompt || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<div class="past-prompt-item">
+          <div class="past-prompt-date">${dateLabel}</div>
+          <div class="past-prompt-text">${safe}</div>
+        </div>`;
+      }).join('');
+    } else {
+      label.style.display = 'none';
+      list.innerHTML = '';
+    }
+  } catch (e) {
+    document.getElementById('pastPromptsLabel').style.display = 'none';
+  }
+}
+
+// ── FILTER ──
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderFeed();
+  loadAllReplies();
+}
+
+
+// ── REPLIES ──
+const repliesCache = {};
+
+async function loadReplies(noteId, forceRefresh) {
+  if (!forceRefresh && repliesCache[noteId]) return repliesCache[noteId];
+  const { data, error } = await db
+    .from('replies')
+    .select('*')
+    .eq('note_id', noteId)
+    .order('created_at', { ascending: true });
+  if (!error) repliesCache[noteId] = data || [];
+  return repliesCache[noteId] || [];
+}
+
+function fmtReplyTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+}
+
+// Build a single reply block element (recursive)
+function countDescendants(id, allReplies) {
+  const direct = allReplies.filter(function(c) { return c.parent_reply_id === id; });
+  return direct.reduce(function(sum, c) { return sum + 1 + countDescendants(c.id, allReplies); }, 0);
+}
+
+function buildReplyBlock(r, allReplies, noteId, readOnly) {
+  const block = document.createElement('div');
+  block.className = 'reply-block';
+  block.dataset.replyId = r.id;
+
+  const meta = document.createElement('div');
+  meta.className = 'reply-meta';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'reply-name';
+  nameEl.textContent = r.nickname || 'anonymous';
+  meta.appendChild(nameEl);
+
+  const city = (r.city || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const country = toAlpha3((r.country || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  const locStr = country ? `${city}, ${country}` : city;
+
+  if (locStr) {
+    const dot1 = document.createElement('span'); dot1.className = 'reply-dot'; meta.appendChild(dot1);
+    const locEl = document.createElement('span'); locEl.className = 'reply-location'; locEl.textContent = locStr; meta.appendChild(locEl);
+  }
+  const dot2 = document.createElement('span'); dot2.className = 'reply-dot'; meta.appendChild(dot2);
+  const timeEl = document.createElement('span');
+  timeEl.className = 'reply-time';
+  timeEl.textContent = fmtReplyTime(r.created_at);
+  meta.appendChild(timeEl);
+
+  // Report (or owner delete) now lives in the action row below, next to "reply" —
+  // build it here, append it once the action row exists further down.
+  let reportOrDeleteBtn;
+  if (!isOwner) {
+    const alreadyReported = reportedLocal.has(r.id);
+    const reportBtn = document.createElement('button');
+    reportBtn.className = alreadyReported ? 'reply-report-btn reported' : 'reply-report-btn';
+    reportBtn.title = alreadyReported ? 'click to undo' : 'report';
+    reportBtn.setAttribute('aria-label', alreadyReported ? 'undo report' : 'report');
+    reportBtn.innerHTML = ICON_FLAG;
+    reportBtn.addEventListener('click', async function() {
+      if (reportedLocal.has(r.id)) {
+        if (!confirm('Undo this report?')) return;
+        reportBtn.disabled = true;
+        reportBtn.style.opacity = '0.5';
+        try {
+          const { error } = await db.rpc('decrement_reply_report', { p_reply_id: r.id, p_device_id: getDeviceId() });
+          if (error) {
+            console.error('Undo report failed:', error.message);
+            alert("Couldn't undo the report — please try again.");
+            reportBtn.disabled = false; reportBtn.style.opacity = '';
+            return;
+          }
+        } catch (e) {
+          console.error('Undo report failed:', e);
+          alert("Couldn't undo the report — please try again.");
+          reportBtn.disabled = false; reportBtn.style.opacity = '';
+          return;
+        }
+        r.reports = Math.max((r.reports || 0) - 1, 0);
+        unmarkReportedLocal(r.id);
+        reportBtn.className = 'reply-report-btn';
+        reportBtn.title = 'report';
+        reportBtn.setAttribute('aria-label', 'report');
+        reportBtn.disabled = false;
+        reportBtn.style.opacity = '';
+      } else {
+        if (!confirm('Report this reply for review? AJD will check it and delete if appropriate.')) return;
+        reportBtn.disabled = true;
+        reportBtn.style.opacity = '0.5';
+        try {
+          const { error } = await db.rpc('increment_reply_report', { p_reply_id: r.id, p_device_id: getDeviceId() });
+          if (error) {
+            console.error('Report failed:', error.message);
+            alert("Couldn't submit the report — please try again.");
+            reportBtn.disabled = false; reportBtn.style.opacity = '';
+            return;
+          }
+        } catch (e) {
+          console.error('Report failed:', e);
+          alert("Couldn't submit the report — please try again.");
+          reportBtn.disabled = false; reportBtn.style.opacity = '';
+          return;
+        }
+        r.reports = (r.reports || 0) + 1;
+        markReportedLocal(r.id);
+        reportBtn.className = 'reply-report-btn reported';
+        reportBtn.title = 'click to undo';
+        reportBtn.setAttribute('aria-label', 'undo report');
+        reportBtn.disabled = false;
+        reportBtn.style.opacity = '';
+      }
+      updateCounts();
+    });
+    reportOrDeleteBtn = reportBtn;
+  } else {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'owner-delete';
+    delBtn.textContent = (r.reports || 0) > 0 ? `delete (⚠ ${r.reports})` : 'delete';
+    delBtn.addEventListener('click', function() { ownerDeleteReply(r.id, noteId); });
+    reportOrDeleteBtn = delBtn;
+  }
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'reply-body';
+  bodyEl.textContent = r.body;
+
+  block.appendChild(meta);
+  block.appendChild(bodyEl);
+
+  const children = sortReplies(allReplies.filter(function(c) { return c.parent_reply_id === r.id; }), allReplies);
+
+  if (readOnly) {
+    const descCount = countDescendants(r.id, allReplies);
+    const roBtnRow = document.createElement('div');
+    roBtnRow.className = 'reply-btn-row';
+    const roReplyBtn = document.createElement('button');
+    roReplyBtn.className = 'reply-btn';
+    roReplyBtn.innerHTML = '&#8627; reply';
+    roReplyBtn.style.opacity = '0.4';
+    roReplyBtn.style.cursor = 'default';
+    roReplyBtn.disabled = true;
+    roBtnRow.appendChild(roReplyBtn);
+    if (descCount > 0) {
+      const roSep = document.createElement('span');
+      roSep.textContent = '·';
+      roSep.style.cssText = 'color:var(--accent);user-select:none;margin:0 6px;';
+      roBtnRow.appendChild(roSep);
+      const roCountBtn = document.createElement('button');
+      roCountBtn.className = 'reply-btn';
+      roCountBtn.innerHTML = '&#8627; ' + descCount + ' repl' + (descCount === 1 ? 'y' : 'ies');
+      roBtnRow.appendChild(roCountBtn);
+      const nested = document.createElement('div');
+      nested.className = 'nested-thread';
+      nested.style.display = expandedRepliesLocal.has(r.id) ? '' : 'none';
+      children.forEach(function(child) {
+        nested.appendChild(buildReplyBlock(child, allReplies, noteId, true));
+      });
+      roCountBtn.addEventListener('click', function() {
+        const nowHidden = nested.style.display !== 'none';
+        nested.style.display = nowHidden ? 'none' : '';
+        if (nowHidden) expandedRepliesLocal.delete(r.id); else expandedRepliesLocal.add(r.id);
+      });
+      roBtnRow.appendChild(reportOrDeleteBtn);
+      block.appendChild(roBtnRow);
+      block.appendChild(nested);
+    } else {
+      roBtnRow.appendChild(reportOrDeleteBtn);
+      block.appendChild(roBtnRow);
+    }
+    return block;
+  }
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'reply-btn-row';
+
+  const replyBtn = document.createElement('button');
+  replyBtn.className = 'reply-btn';
+  replyBtn.innerHTML = '&#8627; reply';
+  replyBtn.addEventListener('click', function() {
+    const card = block.closest('.note-card, .replies-overlay');
+    const existing = card.querySelector('.reply-compose');
+    if (existing) { existing.remove(); return; }
+    const compose = buildComposeBox(noteId, r.id, r.nickname || 'anonymous');
+    if (!compose) return; // mobile: opened as a bottom sheet already
+    compose.dataset.top = 'true';
+    let nested = block.querySelector('.nested-thread');
+    if (!nested) {
+      nested = document.createElement('div');
+      nested.className = 'nested-thread';
+      block.appendChild(nested);
+    }
+    nested.style.display = ''; // ensure visible
+    expandedRepliesLocal.add(r.id);
+    nested.insertBefore(compose, nested.firstChild);
+    compose.querySelector('.reply-body-input').focus();
+  });
+  btnRow.appendChild(replyBtn);
+
+  if (children.length > 0) {
+    const sep = document.createElement('span');
+    sep.textContent = '·';
+    sep.style.cssText = 'color:var(--accent);user-select:none;margin:0 6px;';
+    btnRow.appendChild(sep);
+    const countBtn = document.createElement('button');
+    countBtn.className = 'reply-btn';
+    countBtn.innerHTML = '&#8627; ' + countDescendants(r.id, allReplies) + ' repl' + (countDescendants(r.id, allReplies) === 1 ? 'y' : 'ies');
+    const nested = document.createElement('div');
+    nested.className = 'nested-thread';
+    nested.style.display = expandedRepliesLocal.has(r.id) ? '' : 'none';
+    children.forEach(function(child) {
+      nested.appendChild(buildReplyBlock(child, allReplies, noteId, false));
+    });
+    countBtn.addEventListener('click', function() {
+      const willHide = nested.style.display !== 'none';
+      nested.style.display = willHide ? 'none' : '';
+      if (willHide) expandedRepliesLocal.delete(r.id); else expandedRepliesLocal.add(r.id);
+    });
+    btnRow.appendChild(countBtn);
+    btnRow.appendChild(reportOrDeleteBtn);
+    block.appendChild(btnRow);
+    block.appendChild(nested);
+  } else {
+    btnRow.appendChild(reportOrDeleteBtn);
+    block.appendChild(btnRow);
+  }
+
+  return block;
+}
+
+// Same preference cascade the main feed uses (minus pinning, which doesn't apply to
+// replies): your own replies first, then most replies underneath, then most recent.
+function sortReplies(list, allReplies) {
+  return [...list].sort(function(a, b) {
+    const aMine = myRepliesLocal.has(a.id) ? 0 : 1;
+    const bMine = myRepliesLocal.has(b.id) ? 0 : 1;
+    if (aMine !== bMine) return aMine - bMine;
+    const aCount = countDescendants(a.id, allReplies);
+    const bCount = countDescendants(b.id, allReplies);
+    if (aCount !== bCount) return bCount - aCount;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+}
+
+function renderAllReplies(allReplies, noteId, container, readOnly) {
+  container.innerHTML = '';
+  const topLevel = sortReplies(allReplies.filter(function(r) { return !r.parent_reply_id; }), allReplies);
+  topLevel.forEach(function(r) {
+    container.appendChild(buildReplyBlock(r, allReplies, noteId, readOnly));
+  });
+}
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 720px)').matches;
+}
+
+// ── REPLIES OVERLAY (mobile only) ──
+// Tapping "N replies" on mobile opens this instead of expanding inline — a dedicated,
+// full-screen view of the note plus its whole reply thread, with a back arrow that
+// just closes the overlay (the feed underneath was never touched, so it's already
+// sitting at the exact same scroll position it was before).
+async function openRepliesOverlay(noteId) {
+  const note = currentNotes.find(function(n) { return n.id === noteId; });
+  if (!note) return;
+
+  const existing = document.querySelector('.replies-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'replies-overlay';
+  overlay.dataset.noteId = noteId;
+
+  const header = document.createElement('div');
+  header.className = 'replies-overlay-header';
+  const backBtn = document.createElement('button');
+  backBtn.className = 'replies-overlay-back';
+  backBtn.innerHTML = '&#8592;';
+  backBtn.setAttribute('aria-label', 'back to feed');
+  const title = document.createElement('div');
+  title.className = 'replies-overlay-title';
+  title.textContent = 'Replies';
+  header.appendChild(backBtn);
+  header.appendChild(title);
+
+  const scrollArea = document.createElement('div');
+  scrollArea.className = 'replies-overlay-scroll';
+
+  // The original note, shown compactly at the top for context
+  const noteSummary = document.createElement('div');
+  noteSummary.className = 'replies-overlay-note';
+  const metaEl = document.createElement('div');
+  metaEl.className = 'note-meta';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'note-name';
+  nameEl.textContent = note.nickname || 'anonymous';
+  metaEl.appendChild(nameEl);
+  const city = note.city || '';
+  const country = toAlpha3(note.country || '');
+  const loc = country ? `${city}, ${country}` : city;
+  if (city) {
+    const dot1 = document.createElement('div'); dot1.className = 'note-dot'; metaEl.appendChild(dot1);
+    const locEl = document.createElement('div'); locEl.className = 'note-location'; locEl.textContent = loc; metaEl.appendChild(locEl);
+  }
+  const dot2 = document.createElement('div'); dot2.className = 'note-dot'; metaEl.appendChild(dot2);
+  const timeEl = document.createElement('div'); timeEl.className = 'note-time'; timeEl.textContent = fmtNoteTime(note.created_at); metaEl.appendChild(timeEl);
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'note-body';
+  bodyEl.textContent = note.body;
+  noteSummary.appendChild(metaEl);
+  noteSummary.appendChild(bodyEl);
+
+  const threadContainer = document.createElement('div');
+  threadContainer.className = 'reply-thread';
+  threadContainer.style.display = '';
+
+  scrollArea.appendChild(noteSummary);
+  scrollArea.appendChild(threadContainer);
+  overlay.appendChild(header);
+  overlay.appendChild(scrollArea);
+
+  function closeOverlay() {
+    document.querySelectorAll('.mobile-reply-sheet').forEach(function(el) { el.remove(); });
+    document.body.classList.remove('mobile-reply-open');
+    overlay.remove();
+    document.body.classList.remove('replies-overlay-open');
+  }
+  backBtn.addEventListener('click', closeOverlay);
+
+  document.body.appendChild(overlay);
+  document.body.classList.add('replies-overlay-open');
+
+  const replies = await loadReplies(noteId);
+  renderAllReplies(replies, noteId, threadContainer, false);
+
+  // The main reply bar shows automatically no matter which trigger opened this
+  // overlay — tapping "reply" or tapping "N replies" both land you here with it ready.
+  buildComposeBox(noteId, null, note.nickname || 'anonymous');
+}
+
+// Called after a reply is posted or deleted — keeps an open overlay in sync
+// with whatever just changed, without needing to close and reopen it.
+async function refreshOpenRepliesOverlay(noteId) {
+  const overlay = document.querySelector('.replies-overlay[data-note-id="' + noteId + '"]');
+  if (!overlay) return;
+  const threadContainer = overlay.querySelector('.reply-thread');
+  if (!threadContainer) return;
+  const replies = await loadReplies(noteId, true);
+  renderAllReplies(replies, noteId, threadContainer, false);
+}
+
+function toggleReplyCompose(btn, noteId, parentReplyId) {
+  // Close any open compose in entire card first
+  const card = btn.closest('.note-card, .replies-overlay');
+  const existing = card.querySelector('.reply-compose');
+  if (existing) {
+    // If it's already open right after this btn, close it
+    if (btn.nextElementSibling && btn.nextElementSibling.classList.contains('reply-compose')) {
+      existing.remove();
+      return;
+    }
+    existing.remove();
+  }
+  const compose = buildComposeBox(noteId, parentReplyId);
+  if (!compose) return; // mobile: opened as a bottom sheet already
+  btn.insertAdjacentElement('afterend', compose);
+  compose.querySelector('.reply-body-input').focus();
+}
+
+function openTopLevelCompose(toggleBtn, noteId) {
+  const card = toggleBtn.closest('.note-card, .replies-overlay');
+  // Toggle off if already open at top level
+  const existing = card.querySelector('.reply-compose[data-top="true"]');
+  if (existing) { existing.remove(); return; }
+  // Close any other open compose
+  const anyOpen = card.querySelector('.reply-compose');
+  if (anyOpen) anyOpen.remove();
+
+  let thread = card.querySelector('.reply-thread');
+  if (!thread) {
+    thread = document.createElement('div');
+    thread.className = 'reply-thread';
+    toggleBtn.insertAdjacentElement('afterend', thread);
+  }
+  const compose = buildComposeBox(noteId, null);
+  if (!compose) return; // mobile: opened as a bottom sheet already
+  compose.dataset.top = 'true';
+  thread.prepend(compose);
+  compose.querySelector('.reply-body-input').focus();
+}
+
+// Builds the reply compose UI. On desktop this returns an inline element for the caller
+// to place in the thread. On mobile it docks a bottom sheet to the screen itself (like
+// YouTube's mobile reply bar) and returns null — there's nothing left for the caller to insert.
+// replyToLabel is just the display name shown in the mobile sheet's "replying to ___" header.
+function buildComposeBox(noteId, parentReplyId, replyToLabel) {
+  const mobile = isMobileView();
+  const compose = document.createElement('div');
+  compose.className = mobile ? 'mobile-reply-sheet' : 'reply-compose';
+
+  const bodyInput = document.createElement('textarea');
+  bodyInput.className = mobile ? 'mobile-reply-input' : 'reply-body-input';
+  bodyInput.placeholder = 'write a reply...';
+  bodyInput.rows = 1;
+  bodyInput.addEventListener('input', function() {
+    bodyInput.style.height = 'auto';
+    bodyInput.style.height = bodyInput.scrollHeight + 'px';
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = mobile ? 'mobile-reply-send' : 'reply-submit-btn';
+  submitBtn.innerHTML = mobile ? '&#8593;' : 'post reply &#8599;';
+  submitBtn.setAttribute('aria-label', 'post reply');
+
+  function closeMobileSheet() {
+    compose.remove();
+    document.body.classList.remove('mobile-reply-open');
+  }
+
+  async function submitReply() {
+    const body = bodyInput.value.trim();
+    if (!body) return;
+    submitBtn.disabled = true;
+    if (!mobile) submitBtn.textContent = 'posting...';
+
+    // Nickname is never asked again here — reuse whatever's already locked in.
+    const nick = localStorage.getItem(DQ_NICK_KEY) || '';
+    const insertData = {
+      note_id: noteId,
+      body: body,
+      city: userCity || '',
+      country: userCountry || ''
+    };
+    if (parentReplyId) insertData.parent_reply_id = parentReplyId;
+    if (nick) insertData.nickname = nick;
+
+    const { data, error } = await db
+      .from('replies')
+      .insert([insertData])
+      .select()
+      .single();
+
+    if (!error) {
+      markMyReplyLocal(data.id);
+      // Whatever thread this reply belongs to, force it to count as "expanded" —
+      // this is what actually guarantees the new reply shows up on the next render,
+      // even if that thread happened to be closed before you replied to it.
+      if (parentReplyId) expandedRepliesLocal.add(parentReplyId);
+      else expandedRepliesLocal.add(noteId);
+      if (!localStorage.getItem(DQ_NICK_KEY)) {
+        // First-ever interaction on this browser was a reply — lock in "anonymous"
+        // just like a first note post would, so identity stays consistent everywhere.
+        localStorage.setItem(DQ_NICK_KEY, 'anonymous');
+        localStorage.setItem(DQ_NICK_LOCKED_KEY, 'true');
+        initNickname();
+      }
+      if (mobile) {
+        bodyInput.value = '';
+        bodyInput.style.height = 'auto';
+        submitBtn.disabled = false;
+        requestAnimationFrame(function() { bodyInput.focus(); });
+      } else {
+        compose.remove();
+      }
+      delete repliesCache[noteId];
+      const card = document.querySelector('.note-card[data-id="' + noteId + '"]');
+      if (card) await attachReplies(card, noteId, true, true);
+      await refreshOpenRepliesOverlay(noteId);
+    } else {
+      console.error('Reply insert error:', error);
+      submitBtn.disabled = false;
+      if (!mobile) submitBtn.innerHTML = 'post reply &#8599;';
+    }
+  }
+
+  submitBtn.addEventListener('click', submitReply);
+
+  if (mobile) {
+    // The note's own top-level reply bar never gets an X. Anything nested — replying
+    // to a specific reply instead of the note itself — always gets one, and it goes
+    // back to the note-level bar specifically, regardless of tap order.
+    const isTopLevelNoteReply = !parentReplyId;
+
+    const header = document.createElement('div');
+    header.className = 'mobile-reply-header';
+    const label = document.createElement('span');
+    label.className = 'mobile-reply-label';
+    label.textContent = replyToLabel ? `replying to ${replyToLabel}` : 'write a reply';
+    header.appendChild(label);
+
+    if (!isTopLevelNoteReply) {
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'mobile-reply-close';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.setAttribute('aria-label', 'back to the note\'s reply bar');
+      closeBtn.addEventListener('click', function() {
+        const note = currentNotes.find(function(n) { return n.id === noteId; });
+        buildComposeBox(noteId, null, note ? (note.nickname || 'anonymous') : null);
+      });
+      header.appendChild(closeBtn);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'mobile-reply-row';
+    row.appendChild(bodyInput);
+    row.appendChild(submitBtn);
+
+    compose.appendChild(header);
+    compose.appendChild(row);
+
+    // Only one reply sheet at a time makes sense on mobile
+    const existingSheet = document.querySelector('.mobile-reply-sheet');
+    if (existingSheet) existingSheet.remove();
+
+    document.body.appendChild(compose);
+    document.body.classList.add('mobile-reply-open');
+    requestAnimationFrame(function() { bodyInput.focus(); });
+    return null;
+  }
+
+  const row = document.createElement('div');
+  row.className = 'reply-compose-row';
+  row.appendChild(bodyInput);
+  compose.appendChild(row);
+  compose.appendChild(submitBtn);
+  return compose;
+}
+
+
+async function attachReplies(card, noteId, keepOpen, forceRefresh) {
+  // Remove existing reply UI
+  card.querySelectorAll('.reply-thread, .reply-compose').forEach(function(el) { el.remove(); });
+
+  const replies = await loadReplies(noteId, forceRefresh);
+  const actionsRow = card.querySelector('.note-actions-row');
+
+  // Determine if we're viewing today or a past day
+  const t = todayLocal();
+  const viewY = selectedYear || t.year;
+  const viewM = selectedMonth || t.month;
+  const viewD = selectedDay || t.day;
+  const isPastDay = !(viewY === t.year && viewM === t.month && viewD === t.day);
+
+  // Remove old toggle/count buttons and separators — pin/flag/delete are different
+  // classes and live in the same row, so they're untouched by this cleanup.
+  card.querySelectorAll('.reply-toggle-btn, .reply-count-btn, .reply-btn-sep').forEach(function(el) { el.remove(); });
+
+  const rootReplies = replies.filter(function(r) { return !r.parent_reply_id; });
+  const total = replies.length;
+  const replyFlagCount = replies.reduce(function(s, r) { return s + (r.reports || 0); }, 0);
+  const flagBadge = (isOwner && replyFlagCount > 0) ? ' <span class="stats-flag-count">⚠</span>' : '';
+
+  if (isPastDay) {
+    const pastReplyBtn = document.createElement('button');
+    pastReplyBtn.className = 'reply-toggle-btn';
+    pastReplyBtn.innerHTML = '&#8627; reply';
+    pastReplyBtn.style.opacity = '0.4';
+    pastReplyBtn.style.cursor = 'default';
+    pastReplyBtn.disabled = true;
+    actionsRow.insertBefore(pastReplyBtn, actionsRow.firstChild);
+    if (total > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'reply-btn-sep';
+      sep.textContent = '·';
+      sep.style.cssText = 'color:var(--accent);user-select:none;';
+      pastReplyBtn.insertAdjacentElement('afterend', sep);
+      const countBtn = document.createElement('button');
+      countBtn.className = 'reply-toggle-btn reply-count-btn';
+      countBtn.innerHTML = '&#8627; ' + total + ' repl' + (total === 1 ? 'y' : 'ies') + flagBadge;
+      sep.insertAdjacentElement('afterend', countBtn);
+      const thread = document.createElement('div');
+      thread.className = 'reply-thread';
+      thread.style.display = 'none';
+      renderAllReplies(replies, noteId, thread, true);
+      actionsRow.insertAdjacentElement('afterend', thread);
+      countBtn.onclick = function() {
+        if (isMobileView()) { openRepliesOverlay(noteId); return; }
+        const isHidden = thread.style.display === 'none';
+        thread.style.display = isHidden ? '' : 'none';
+      };
+    }
+    return;
+  }
+
+  // Today: full interactive mode
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'reply-toggle-btn';
+  toggleBtn.innerHTML = '&#8627; reply';
+  toggleBtn.onclick = function() {
+    if (isMobileView()) {
+      openRepliesOverlay(noteId);
+      return;
+    }
+    const existing = card.querySelector('.reply-compose[data-top="true"]');
+    if (existing) { existing.remove(); return; }
+    card.querySelectorAll('.reply-compose').forEach(function(el) { el.remove(); });
+    const note = currentNotes.find(function(n) { return n.id === noteId; });
+    const compose = buildComposeBox(noteId, null, note ? (note.nickname || 'anonymous') : null);
+    if (!compose) return; // mobile: opened as a bottom sheet already
+    compose.dataset.top = 'true';
+    let thread = card.querySelector('.reply-thread');
+    if (thread) {
+      thread.style.display = ''; // ensure visible
+      expandedRepliesLocal.add(noteId);
+      thread.insertBefore(compose, thread.firstChild);
+    } else {
+      thread = document.createElement('div');
+      thread.className = 'reply-thread';
+      thread.appendChild(compose);
+      actionsRow.insertAdjacentElement('afterend', thread);
+      expandedRepliesLocal.add(noteId);
+    }
+    compose.querySelector('.reply-body-input').focus();
+  };
+  actionsRow.insertBefore(toggleBtn, actionsRow.firstChild);
+
+  if (total > 0) {
+    const sep = document.createElement('span');
+    sep.className = 'reply-btn-sep';
+    sep.textContent = '·';
+    sep.style.cssText = 'color:var(--accent);user-select:none;';
+    toggleBtn.insertAdjacentElement('afterend', sep);
+    const countBtn = document.createElement('button');
+    countBtn.className = 'reply-toggle-btn reply-count-btn';
+    countBtn.innerHTML = '&#8627; ' + total + ' repl' + (total === 1 ? 'y' : 'ies') + flagBadge;
+    sep.insertAdjacentElement('afterend', countBtn);
+
+    const thread = document.createElement('div');
+    thread.className = 'reply-thread';
+    thread.style.display = (keepOpen || expandedRepliesLocal.has(noteId)) ? '' : 'none';
+    renderAllReplies(replies, noteId, thread, false);
+    actionsRow.insertAdjacentElement('afterend', thread);
+
+    countBtn.onclick = function() {
+      if (isMobileView()) { openRepliesOverlay(noteId); return; }
+      const isHidden = thread.style.display === 'none';
+      thread.style.display = isHidden ? '' : 'none';
+      if (isHidden) expandedRepliesLocal.add(noteId); else expandedRepliesLocal.delete(noteId);
+      if (!isHidden) card.querySelectorAll('.reply-compose').forEach(function(el) { el.remove(); });
+    };
+  }
+}
+
+async function loadAllReplies() {
+  const cards = document.querySelectorAll('.note-card[data-id]');
+  for (const card of cards) {
+    await attachReplies(card, card.dataset.id);
+  }
+  updateCounts(); // reply report counts are only known once replies are loaded
+}
+
+
+
+function renderFeed(opts = {}) {
+  const feed = document.getElementById('feed');
+
+  // Capture scroll position before re-rendering so it stays put naturally.
+  // Only the user's explicit navigation (clicking a day, back-to-today) scrolls to top.
+  const preserveScroll = !opts.scrollToTop;
+  const mainScroll = document.querySelector('.main-scroll');
+  // On desktop .main-scroll is the actual scroll container; on mobile the window scrolls
+  const prevWindowY = preserveScroll ? window.scrollY : 0;
+  const prevMainY = preserveScroll && mainScroll ? mainScroll.scrollTop : 0;
+
+  let list = currentNotes;
+  if (currentFilter === 'on') list = currentNotes.filter(n => n.on_prompt);
+  if (currentFilter === 'off') list = currentNotes.filter(n => !n.on_prompt);
+
+  const replyCount = (n) => (repliesCache[n.id] || []).length;
+  const pinRank = (n) => pinnedLocal.has(n.id) ? 0 : 1; // 0 sorts before 1 — pinned always wins
+  const myNoteRank = (n) => myNotesLocal.has(n.id) ? 0 : 1; // 0 sorts before 1 — your own notes next
+
+  if (isOwner) {
+    // Pinned, then flagged (most reports), then your own notes, then most replies, then most recent
+    list = [...list].sort((a, b) => {
+      const aP = pinRank(a), bP = pinRank(b);
+      if (aP !== bP) return aP - bP;
+      const aR = a.reports || 0;
+      const bR = b.reports || 0;
+      if (aR !== bR) return bR - aR;
+      const aM = myNoteRank(a), bM = myNoteRank(b);
+      if (aM !== bM) return aM - bM;
+      const aReplies = replyCount(a);
+      const bReplies = replyCount(b);
+      if (aReplies !== bReplies) return bReplies - aReplies;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  } else {
+    // Pinned, then your own notes, then most replies, then most recent
+    list = [...list].sort((a, b) => {
+      const aP = pinRank(a), bP = pinRank(b);
+      if (aP !== bP) return aP - bP;
+      const aM = myNoteRank(a), bM = myNoteRank(b);
+      if (aM !== bM) return aM - bM;
+      const aReplies = replyCount(a);
+      const bReplies = replyCount(b);
+      if (aReplies !== bReplies) return bReplies - aReplies;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  }
+
+  // Show/hide the "flagged first" badge
+  const flaggedBadge = document.getElementById('flaggedFirstBadge');
+  if (flaggedBadge) {
+    const hasFlags = isOwner && currentNotes.some(n => (n.reports || 0) > 0);
+    flaggedBadge.style.display = hasFlags ? 'inline-block' : 'none';
+  }
+
+  if (list.length === 0) {
+    feed.innerHTML = '<div class="empty-state">no notes match this filter yet</div>';
+    if (preserveScroll) {
+      window.scrollTo(0, prevWindowY);
+      if (mainScroll) mainScroll.scrollTop = prevMainY;
+    }
+    return;
+  }
+
+  feed.innerHTML = list.map(n => {
+    const safeName = (n.nickname || 'anonymous').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const safeBody = (n.body || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const city = (n.city || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const country = toAlpha3((n.country || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+    const loc = country ? `${city}, ${country}` : city;
+    const locHtml = city ? `<div class="note-dot"></div><div class="note-location">${loc}</div>` : '';
+    // On-prompt distinction is deferred for now — no visual mark in the meta row yet
+
+    // Owner-only: flag tag + flagged styling if reports > 0
+    const reports = n.reports || 0;
+    const isFlagged = isOwner && reports > 0;
+    const reportsTag = isFlagged
+      ? `<span class="reports-tag">⚠ ${reports} report${reports === 1 ? '' : 's'}</span>`
+      : '';
+
+    // Right-side action: owner sees Delete, everyone else sees Report
+    let actionHtml = '';
+    if (isOwner) {
+      actionHtml = `<button class="owner-delete" onclick="ownerDelete('${n.id}')">delete</button>`;
+    } else {
+      const alreadyReported = reportedLocal.has(n.id);
+      actionHtml = alreadyReported
+        ? `<button class="report-btn reported" onclick="unreportNote('${n.id}', this)" title="click to undo" aria-label="undo report">${ICON_FLAG}</button>`
+        : `<button class="report-btn" onclick="reportNote('${n.id}', this)" title="report" aria-label="report">${ICON_FLAG}</button>`;
+    }
+
+    // Personal pin toggle — visible to everyone, private to this browser
+    const isPinned = pinnedLocal.has(n.id);
+    const pinHtml = isPinned
+      ? `<button class="pin-btn pinned" onclick="togglePinNote('${n.id}')" title="click to unpin" aria-label="unpin">${ICON_PIN}</button>`
+      : `<button class="pin-btn" onclick="togglePinNote('${n.id}')" title="pin" aria-label="pin">${ICON_PIN}</button>`;
+
+    const cardClass = [
+      'note-card',
+      isFlagged ? 'flagged' : '',
+      isPinned ? 'pinned' : ''
+    ].filter(Boolean).join(' ');
+
+    return `
+      <div class="${cardClass}" data-id="${n.id}">
+        <div class="note-meta">
+          <div class="note-name">${safeName}</div>
+          ${locHtml}
+          <div class="note-dot"></div>
+          <div class="note-time">${fmtNoteTime(n.created_at)}</div>
+        </div>
+        <div class="note-body">${safeBody}</div>
+        <div class="note-actions-row">
+          ${reportsTag}
+          ${pinHtml}
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Restore scroll position (prevents jump-to-top on filter, delete, report, realtime updates)
+  if (preserveScroll) {
+    window.scrollTo(0, prevWindowY);
+    if (mainScroll) mainScroll.scrollTop = prevMainY;
+  }
+}
+
+// ── REPORT NOTE ──
+async function reportNote(id, btn) {
+  if (reportedLocal.has(id)) return;
+  if (!confirm("Report this note for review? AJD will check it and delete if appropriate.")) return;
+
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
+  try {
+    const { error } = await db.rpc('increment_note_report', { p_note_id: id, p_device_id: getDeviceId() });
+    if (error) {
+      console.error('Report failed:', error.message);
+      alert("Couldn't submit the report — please try again.");
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+      return;
+    }
+  } catch (e) {
+    console.error('Report failed:', e);
+    alert("Couldn't submit the report — please try again.");
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    return;
+  }
+
+  markReportedLocal(id);
+  // Same mechanism pin already uses reliably — a full re-render always reflects
+  // current state correctly, rather than patching just the one button by hand.
+  renderFeed();
+  loadAllReplies();
+}
+
+// ── UNREPORT NOTE (undo an accidental report) ──
+async function unreportNote(id, btn) {
+  if (!reportedLocal.has(id)) return;
+  if (!confirm("Undo this report?")) return;
+
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  try {
+    const { error } = await db.rpc('decrement_note_report', { p_note_id: id, p_device_id: getDeviceId() });
+    if (error) {
+      console.error('Undo report failed:', error.message);
+      alert("Couldn't undo the report — please try again.");
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+      return;
+    }
+  } catch (e) {
+    console.error('Undo report failed:', e);
+    alert("Couldn't undo the report — please try again.");
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    return;
+  }
+
+  unmarkReportedLocal(id);
+  renderFeed();
+  loadAllReplies();
+}
+
+// ── OWNER DELETE ──
+async function ownerDelete(id) {
+  if (!isOwner) return;
+  if (!confirm("Delete this note? This cannot be undone.")) return;
+
+  try {
+    const { error } = await db.from('notes').delete().eq('id', id);
+    if (error) {
+      alert('Delete failed: ' + error.message);
+      return;
+    }
+    currentNotes = currentNotes.filter(n => n.id !== id);
+    updateCounts();
+    renderFeed();
+  loadAllReplies();
+    buildArchive();
+    updateLiveNow();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// ── OWNER DELETE (REPLIES) ──
+async function ownerDeleteReply(id, noteId) {
+  if (!isOwner) return;
+  const allReplies = repliesCache[noteId] || [];
+  const descCount = countDescendants(id, allReplies);
+  const msg = descCount > 0
+    ? `Delete this reply and its ${descCount} nested repl${descCount === 1 ? 'y' : 'ies'}? This cannot be undone.`
+    : 'Delete this reply? This cannot be undone.';
+  if (!confirm(msg)) return;
+
+  // Collect this reply plus every descendant so nothing gets orphaned
+  function collectIds(rootId) {
+    const ids = [rootId];
+    allReplies.filter(function(c) { return c.parent_reply_id === rootId; }).forEach(function(child) {
+      ids.push(...collectIds(child.id));
+    });
+    return ids;
+  }
+  const idsToDelete = collectIds(id);
+
+  try {
+    const { error } = await db.from('replies').delete().in('id', idsToDelete);
+    if (error) {
+      alert('Delete failed: ' + error.message);
+      return;
+    }
+    const card = document.querySelector('.note-card[data-id="' + noteId + '"]');
+    if (card) await attachReplies(card, noteId, true, true);
+    await refreshOpenRepliesOverlay(noteId);
+    updateCounts();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// ── COUNTS ──
+// Compact display for large numbers: 999 stays "999", 1000+ becomes "1k", "1.2k", "12.3k", etc.
+function formatCount(n) {
+  if (n < 1000) return String(n);
+  const rounded = Math.floor((n / 1000) * 10) / 10;
+  return (rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)) + 'k';
+}
+
+function updateCounts() {
+  const onCount = currentNotes.filter(n => n.on_prompt).length;
+  const offCount = currentNotes.length - onCount;
+  const flaggedCount = currentNotes.filter(n => (n.reports || 0) > 0).length;
+  const noteReports = currentNotes.reduce((sum, n) => sum + (n.reports || 0), 0);
+  const replyReports = currentNotes.reduce((sum, n) => {
+    const replies = repliesCache[n.id] || [];
+    return sum + replies.reduce((s, r) => s + (r.reports || 0), 0);
+  }, 0);
+  const totalReports = noteReports + replyReports;
+
+  document.getElementById('countAll').textContent = formatCount(currentNotes.length);
+  document.getElementById('countOn').textContent = formatCount(onCount);
+  document.getElementById('countOff').textContent = formatCount(offCount);
+
+  const t = todayLocal();
+  const isToday = (selectedYear || t.year) === t.year && (selectedMonth || t.month) === t.month && (selectedDay || t.day) === t.day;
+
+  // Calculate day-of-year for the viewed date
+  const dayOfYear = (d) => {
+    const start = new Date(d.getFullYear(), 0, 0);
+    const diff = d - start;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  };
+
+  // Update the right-side pill: top "day", number = day-of-year, bottom "of the year"
+  const viewedDate = isToday
+    ? new Date(t.year, t.month - 1, t.day)
+    : new Date(selectedYear, selectedMonth - 1, selectedDay);
+  document.getElementById('todayCount').textContent = dayOfYear(viewedDate);
+  const lblEl = document.getElementById('todayLbl');
+  if (lblEl) {
+    lblEl.textContent = 'of the year';
+  }
+
+  // Stats line: day name + notes count (singular/plural aware)
+  const noteWord = (n) => n === 1 ? 'note' : 'notes';
+  let statsHtml;
+  const flagPart = (isOwner && flaggedCount > 0)
+    ? ` · <span class="stats-flag-count">⚠ ${flaggedCount} flagged</span>`
+    : '';
+  if (isToday) {
+    const dayName = DAYS[viewedDate.getDay()];
+    statsHtml = `${dayName} · ${formatCount(currentNotes.length)} ${noteWord(currentNotes.length)}${flagPart}`;
+  } else {
+    statsHtml = `${DAYS[viewedDate.getDay()]} · ${formatCount(currentNotes.length)} ${noteWord(currentNotes.length)}${flagPart}`;
+  }
+  document.getElementById('mainStats').innerHTML = statsHtml;
+
+  // Owner-only reports pill next to today-pill (now includes reply reports too)
+  const reportsPill = document.getElementById('reportsPill');
+  if (reportsPill) {
+    if (isOwner && totalReports > 0) {
+      document.getElementById('reportsPillNum').textContent = formatCount(totalReports);
+      reportsPill.style.display = 'flex';
+    } else {
+      reportsPill.style.display = 'none';
+    }
+  }
+}
+
+// ── LOAD NOTES FOR SELECTED DAY ──
+async function loadNotes(opts = {}) {
+  // Default: scroll to top when loadNotes is called (it's usually a context switch — new day/filter)
+  // Callers that want to preserve scroll (e.g. silent background reload) pass scrollToTop: false
+  const scrollToTop = opts.scrollToTop !== false;
+  const feed = document.getElementById('feed');
+
+  // Close any open mobile reply sheet — it'd otherwise be left pointing at a note
+  // that's no longer the one in view once the day changes.
+  document.querySelectorAll('.mobile-reply-sheet').forEach(function(el) { el.remove(); });
+  document.body.classList.remove('mobile-reply-open');
+  document.querySelectorAll('.replies-overlay').forEach(function(el) { el.remove(); });
+  document.body.classList.remove('replies-overlay-open');
+
+  // Scroll to top INSTANTLY before any new content renders. Smooth scroll fights render on different-height pages.
+  // On desktop, .main-scroll is the actual scroll container. On mobile, it's the window.
+  if (scrollToTop) {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const mainScroll = document.querySelector('.main-scroll');
+    if (mainScroll) mainScroll.scrollTop = 0;
+  }
+
+  feed.innerHTML = '<div class="loading-state">loading notes…</div>';
+
+  const t = todayLocal();
+  const y = selectedYear || t.year;
+  const m = selectedMonth || t.month;
+  const d = selectedDay || t.day;
+
+  const from = new Date(y, m - 1, d, 0, 0, 0).toISOString();
+  const to = new Date(y, m - 1, d, 23, 59, 59).toISOString();
+
+  try {
+    const { data, error } = await db
+      .from('notes')
+      .select('*')
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('created_at', { ascending: false });
+
+    currentNotes = (error || !data) ? [] : data;
+  } catch (e) {
+    currentNotes = [];
+  }
+
+  // Fetch every reply for today's notes in one go — this is what lets us sort notes
+  // by reply count before the first render, instead of fetching replies note-by-note.
+  if (currentNotes.length > 0) {
+    try {
+      const noteIds = currentNotes.map(n => n.id);
+      const { data: allReplies, error: repliesErr } = await db
+        .from('replies')
+        .select('*')
+        .in('note_id', noteIds)
+        .order('created_at', { ascending: true });
+      noteIds.forEach(id => { repliesCache[id] = []; });
+      if (!repliesErr && allReplies) {
+        allReplies.forEach(r => {
+          if (!repliesCache[r.note_id]) repliesCache[r.note_id] = [];
+          repliesCache[r.note_id].push(r);
+        });
+      }
+    } catch (e) { /* per-note fetch in loadAllReplies will cover it if this fails */ }
+  }
+
+  updateCounts();
+  renderFeed({ scrollToTop });
+  loadAllReplies();
+
+  // Belt-and-braces: scroll to top again AFTER render in case new content shifted things
+  if (scrollToTop) {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const mainScroll = document.querySelector('.main-scroll');
+    if (mainScroll) mainScroll.scrollTop = 0;
+  }
+
+  // Update main header title
+  const dateObj = new Date(y, m - 1, d);
+  document.getElementById('mainTitle').innerHTML =
+    `${MONTHS[m-1]} <em>${d}</em>, ${y}`;
+
+  const isToday = y === t.year && m === t.month && d === t.day;
+  document.getElementById('feedLabel').textContent =
+    isToday ? 'notes from today' : `notes from ${MONTHS_SHORT[m-1]} ${d}, ${y}`;
+}
+
+// ── LIVE NOW: today's global spread in mobile drawer (real data only, no speculation) ──
+async function updateLiveNow() {
+  const sidebarCard = document.getElementById('liveNowSidebar');
+  if (!sidebarCard) return;
+
+  const t = todayLocal();
+  const from = new Date(t.year, t.month - 1, t.day, 0, 0, 0).toISOString();
+  const to = new Date(t.year, t.month - 1, t.day, 23, 59, 59).toISOString();
+
+  const hide = () => { sidebarCard.style.display = 'none'; };
+
+  try {
+    const { data, error } = await db
+      .from('notes')
+      .select('city, country')
+      .gte('created_at', from)
+      .lte('created_at', to);
+
+    if (error || !data || data.length === 0) { hide(); return; }
+
+    const cities = new Set();
+    const countries = new Set();
+    data.forEach(n => {
+      if (n.city && n.city.trim()) cities.add(n.city.trim());
+      if (n.country && n.country.trim()) {
+        const c3 = toAlpha3(n.country.trim());
+        if (c3) countries.add(c3);
+      }
+    });
+
+    if (cities.size === 0 && countries.size === 0) { hide(); return; }
+
+    const cityCount = cities.size;
+    const countryCount = countries.size;
+    let spread;
+    if (cityCount === 1 && countryCount === 1) {
+      spread = `from <strong>${[...cities][0]}</strong>`;
+    } else if (cityCount > 1 && countryCount === 1) {
+      spread = `from <strong>${cityCount} cities</strong>`;
+    } else if (cityCount === 1 && countryCount > 1) {
+      spread = `from <strong>${cityCount} city</strong> across <strong>${countryCount} countries</strong>`;
+    } else {
+      spread = `from <strong>${cityCount} cities</strong> across <strong>${countryCount} ${countryCount === 1 ? 'country' : 'countries'}</strong>`;
+    }
+    const codes = countries.size > 0 ? [...countries].sort().join(' · ') : '';
+
+    const sideSpread = document.getElementById('liveNowSpreadSide');
+    const sideCodes = document.getElementById('liveNowCodesSide');
+    if (sideSpread) sideSpread.innerHTML = spread;
+    if (sideCodes) {
+      sideCodes.textContent = codes;
+      sideCodes.style.display = codes ? '' : 'none';
+    }
+    sidebarCard.style.display = '';
+
+  } catch (e) {
+    hide();
+  }
+}
+
+// ── QUOTE OF THE DAY ──
+// Fetches the quote for the currently-viewed day.
+// On today → today's quote. On archive day → that day's quote.
+// If no quote exists for that date, the dark box is hidden.
+async function updateQuote() {
+  const topbox = document.getElementById('quoteTopbox');
+  const sideCard = document.getElementById('quoteSidebar');
+  if (!topbox && !sideCard) return;
+
+  const hide = () => {
+    if (topbox) topbox.style.display = 'none';
+    if (sideCard) sideCard.style.display = 'none';
+  };
+
+  // Use the selected day if the user is browsing archive, otherwise today
+  const t = todayLocal();
+  const year = selectedYear || t.year;
+  const month = selectedMonth || t.month;
+  const day = selectedDay || t.day;
+  const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+  try {
+    const { data, error } = await db
+      .from('quotes')
+      .select('quote_text, quote_date')
+      .eq('quote_date', dateStr)
+      .limit(1);
+
+    if (error || !data || data.length === 0) { hide(); return; }
+
+    const txt = data[0].quote_text;
+    const topText = document.getElementById('quoteTopboxText');
+    const sideText = document.getElementById('quoteSidebarText');
+    const topLbl = document.getElementById('quoteTopboxLbl');
+    const sideLbl = document.getElementById('quoteSidebarLbl');
+
+    // Determine label: "today's quote" when viewing today, "quote" when viewing archive
+    const isToday = (year === t.year && month === t.month && day === t.day);
+    const labelText = isToday ? "today's quote" : "the day's quote";
+    if (topLbl) topLbl.textContent = labelText;
+    if (sideLbl) sideLbl.textContent = labelText;
+
+    if (topText) topText.textContent = txt;
+    if (sideText) sideText.textContent = txt;
+    if (topbox) topbox.style.display = '';
+    if (sideCard) sideCard.style.display = '';
+  } catch (e) {
+    hide();
+  }
+}
+
+async function buildArchive() {
+  try {
+    const { data, error } = await db.from('notes').select('created_at');
+    if (error || !data) return;
+
+    archiveData = {};
+    data.forEach(n => {
+      const d = new Date(n.created_at);
+      const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+      archiveData[y] ??= {};
+      archiveData[y][m] ??= {};
+      archiveData[y][m][day] = (archiveData[y][m][day] || 0) + 1;
+    });
+
+    // Fill in ALL days from launch to today so zero-note days still appear
+    const LAUNCH = new Date(2026, 3, 20); // Apr 20, 2026
+    const t = todayLocal();
+    const todayDate = new Date(t.year, t.month - 1, t.day);
+    for (let d = new Date(LAUNCH); d <= todayDate; d.setDate(d.getDate() + 1)) {
+      const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+      archiveData[y] ??= {};
+      archiveData[y][m] ??= {};
+      archiveData[y][m][day] = archiveData[y][m][day] || 0;
+    }
+
+    document.getElementById('totalCount').textContent =
+      formatCount(data.length) + ' note' + (data.length !== 1 ? 's' : '') + ' · all time';
+
+    renderArchiveTree();
+  } catch (e) {
+    document.getElementById('totalCount').textContent = '— notes · all time';
+  }
+}
+
+function renderArchiveTree() {
+  const t = todayLocal();
+  const tree = document.getElementById('archiveTree');
+  tree.innerHTML = '';
+  const years = Object.keys(archiveData).sort((a,b) => b - a);
+  if (!years.includes(String(t.year))) years.unshift(String(t.year));
+
+  years.forEach(y => {
+    const yearKey = String(y);
+    const isExpanded = expandedYears.has(yearKey);
+    const isSelYear = String(selectedYear || t.year) === yearKey;
+
+    const yearBtn = document.createElement('button');
+    yearBtn.className = 'year-btn' + (isSelYear ? ' active' : '');
+    yearBtn.innerHTML = `<span>${y}</span><span class="chevron ${isExpanded ? 'open' : ''}">▾</span>`;
+    yearBtn.onclick = () => {
+      if (expandedYears.has(yearKey)) {
+        expandedYears.delete(yearKey);
+      } else {
+        expandedYears.add(yearKey);
+      }
+      renderArchiveTree();
+    };
+    tree.appendChild(yearBtn);
+
+    if (isExpanded) {
+      const monthList = document.createElement('div');
+      monthList.className = 'month-list open';
+      const months = archiveData[y] ? Object.keys(archiveData[y]).sort((a,b) => b - a) : [];
+      if (!months.includes(String(t.month)) && String(y) === String(t.year)) months.unshift(String(t.month));
+
+      months.forEach(m => {
+        const monthKey = `${y}-${m}`;
+        const isMonthExpanded = expandedMonths.has(monthKey);
+        const isSelMonth = String(selectedMonth || t.month) === String(m) && isSelYear;
+        const mCount = archiveData[y] && archiveData[y][m] ? Object.values(archiveData[y][m]).reduce((a,b) => a+b, 0) : 0;
+
+        const mBtn = document.createElement('button');
+        mBtn.className = 'month-btn' + (isSelMonth ? ' active' : '');
+        mBtn.innerHTML = `<span>${MONTHS[m-1]}</span><span style="display:flex;align-items:center;gap:8px;"><span class="month-count">${mCount || ''}</span><span class="chevron-small ${isMonthExpanded ? 'open' : ''}">▾</span></span>`;
+        mBtn.onclick = () => {
+          if (expandedMonths.has(monthKey)) {
+            expandedMonths.delete(monthKey);
+          } else {
+            expandedMonths.add(monthKey);
+          }
+          renderArchiveTree();
+        };
+        monthList.appendChild(mBtn);
+
+        if (isMonthExpanded) {
+          const dayList = document.createElement('div');
+          dayList.className = 'day-list open';
+          const days = archiveData[y] && archiveData[y][m] ? Object.keys(archiveData[y][m]).sort((a,b) => b - a) : [];
+          const selD = selectedDay || (String(y) === String(t.year) && String(m) === String(t.month) ? t.day : null);
+          if (String(y) === String(t.year) && String(m) === String(t.month) && !days.includes(String(t.day))) days.unshift(String(t.day));
+
+          days.forEach(day => {
+            const isSelDay = String(selD) === String(day) && isSelMonth;
+            const isTodayDay = parseInt(day) === t.day && parseInt(m) === t.month && parseInt(y) === t.year;
+            const dc = archiveData[y] && archiveData[y][m] && archiveData[y][m][day] ? archiveData[y][m][day] : 0;
+            const dBtn = document.createElement('button');
+            dBtn.className = 'day-btn' + (isSelDay ? ' active' : '');
+            dBtn.innerHTML = `<span><span class="day-num">${String(day).padStart(2,'0')}</span>${isTodayDay ? '<span class="day-today-label">today</span>' : ''}</span><span class="day-count">${dc}</span>`;
+            dBtn.onclick = () => {
+              selectedYear = parseInt(y);
+              selectedMonth = parseInt(m);
+              selectedDay = parseInt(day);
+              renderArchiveTree();
+              loadNotes();
+              loadTodayPrompt();
+              updateQuote();
+              // Scroll the day-list so the selected day is at the top
+              const activeDayBtn = document.querySelector('.day-btn.active');
+              if (activeDayBtn) {
+                const dayListEl = activeDayBtn.closest('.day-list');
+                if (dayListEl) dayListEl.scrollTop = activeDayBtn.offsetTop - dayListEl.offsetTop;
+              }
+              // Do not close mobile drawer — let user close it themselves
+            };
+            dayList.appendChild(dBtn);
+          });
+          monthList.appendChild(dayList);
+        }
+      });
+      tree.appendChild(monthList);
+    }
+  });
+}
+
+// ── POST A NOTE ──
+async function postNote() {
+  const bodyInput = document.getElementById('noteBody');
+  const onPrompt = document.getElementById('onPromptCheckbox').checked;
+  const errorMsg = document.getElementById('errorMsg');
+  const btn = document.getElementById('postBtn');
+  errorMsg.textContent = '';
+
+  // Rate limit
+  const wait = secondsUntilCanPost();
+  if (wait > 0) {
+    errorMsg.textContent = `take a breath — one more quickie in ${wait}s`;
+    startRateLimitCountdown();
+    return;
+  }
+
+  const nickname = getNicknameForPost();
+  const body = bodyInput.value.trim();
+
+  if (!body) { errorMsg.textContent = 'write something first'; return; }
+
+  const check = checkContent(body);
+  if (!check.ok) {
+    errorMsg.textContent = check.reason;
+    return;
+  }
+
+  // If this exact nickname isn't the one already locked in for this browser, reserve
+  // it before we post — this is what guarantees no two people end up sharing a name.
+  // (Checking against the actual locked value, not just "is something locked," matters:
+  // someone mid-way through changing their nickname — typed but not yet saved — still
+  // needs this check to run for the new value they're about to post under.)
+  const lockedNickname = (localStorage.getItem(DQ_NICK_KEY) || '').trim().toLowerCase();
+  const isCurrentNicknameAlreadyClaimed =
+    localStorage.getItem(DQ_NICK_LOCKED_KEY) === 'true' &&
+    nickname.trim().toLowerCase() === lockedNickname;
+  if (nickname && !isCurrentNicknameAlreadyClaimed) {
+    btn.disabled = true;
+    btn.textContent = 'checking name…';
+    const claim = await claimNickname(nickname);
+    if (!claim.ok) {
+      errorMsg.textContent = claim.reason;
+      btn.disabled = false;
+      btn.textContent = 'post it →';
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'posting…';
+
+  try {
+    const { data, error } = await db
+      .from('notes')
+      .insert([{
+        nickname,
+        body,
+        city: userCity,
+        country: userCountry,
+        on_prompt: onPrompt,
+        device_id: getDeviceId()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      if (error.message && error.message.indexOf('rate_limited') !== -1) {
+        errorMsg.textContent = 'take a breath — one more quickie in a few seconds';
+      } else {
+        errorMsg.textContent = 'something went wrong — check your config';
+        console.error(error);
+      }
+      btn.disabled = false;
+      btn.textContent = 'post it →';
+    } else {
+      markMyNoteLocal(data.id);
+      if (nickname) lockNicknameAfterPost(nickname);
+      else if (localStorage.getItem(DQ_NICK_KEY)) lockNicknameAfterPost(localStorage.getItem(DQ_NICK_KEY));
+      else lockNicknameAfterPost('anonymous');
+      bodyInput.value = '';
+      document.getElementById('nudgeWarning').textContent = '';
+      document.getElementById('onPromptCheckbox').checked = false;
+      setLastPostTime();
+
+      const t = todayLocal();
+      if ((!selectedDay || selectedDay === t.day) && (!selectedMonth || selectedMonth === t.month) && (!selectedYear || selectedYear === t.year)) {
+        currentNotes.unshift(data);
+        updateCounts();
+        renderFeed({ scrollToTop: true });
+        loadAllReplies();
+        // Scroll to top so the poster sees their new note land at the top of the feed
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        const mainScroll = document.querySelector('.main-scroll');
+        if (mainScroll) mainScroll.scrollTop = 0;
+      }
+      await buildArchive();
+      updateLiveNow();
+      startRateLimitCountdown();
+    }
+  } catch (e) {
+    errorMsg.textContent = 'something went wrong — try again';
+    btn.disabled = false;
+    btn.textContent = 'post it →';
+  }
+}
+
+// ── REALTIME ──
+// Keeps the whole feed live without needing a refresh: new notes and replies appear,
+// deletions disappear, and count/report changes update — all patched into the specific
+// note or reply affected rather than reloading the feed, so the selected date, active
+// filter, scroll position, and any open reply thread stay exactly where they were.
+
+// True while a compose box (top-level or nested-reply) is open inside a container —
+// used to skip patching a note/thread mid-type so nobody's in-progress reply gets wiped
+// out from under them by an incoming update.
+function hasOpenComposeIn(container) {
+  return !!(container && container.querySelector('.reply-compose'));
+}
+
+// Re-attaches a note's reply UI (inline thread) and/or its open mobile overlay from
+// whatever is currently in repliesCache — used after any reply insert/update/delete.
+// forceRefresh only matters when the cache itself might be stale (insert from another
+// tab isn't already reflected locally); for deletes/updates we've just mutated the
+// cache directly, so a network refetch isn't needed.
+function patchReplyUIForNote(noteId, forceRefresh) {
+  const card = document.querySelector('.note-card[data-id="' + noteId + '"]');
+  if (card && !hasOpenComposeIn(card)) {
+    attachReplies(card, noteId, false, !!forceRefresh);
+  }
+  const overlay = document.querySelector('.replies-overlay[data-note-id="' + noteId + '"]');
+  if (overlay && !hasOpenComposeIn(overlay)) {
+    refreshOpenRepliesOverlay(noteId);
+  }
+  updateCounts();
+}
+
+// Finds which note a cached reply belongs to, and its index, by id alone — sidesteps
+// ever needing note_id from a DELETE payload (which isn't guaranteed to be present).
+function findCachedReply(replyId) {
+  for (const noteId in repliesCache) {
+    const idx = repliesCache[noteId].findIndex(x => x.id === replyId);
+    if (idx !== -1) return { noteId, idx };
+  }
+  return null;
+}
+
+function handleNoteInsert(n) {
+  const t = todayLocal();
+  const sameDay = new Date(n.created_at).getFullYear() === (selectedYear || t.year) &&
+                  new Date(n.created_at).getMonth() + 1 === (selectedMonth || t.month) &&
+                  new Date(n.created_at).getDate() === (selectedDay || t.day);
+  if (sameDay && !currentNotes.find(x => x.id === n.id)) {
+    currentNotes.unshift(n);
+    updateCounts();
+    renderFeed();
+    loadAllReplies();
+  }
+  buildArchive();
+  updateLiveNow();
+}
+
+// Updates just the reports-tag and flagged styling on one note's card in place —
+// doesn't touch ordering, scroll, or anything else in the feed.
+function handleNoteUpdate(n) {
+  const idx = currentNotes.findIndex(x => x.id === n.id);
+  if (idx === -1) return; // not part of the currently viewed day — nothing to patch
+  currentNotes[idx] = Object.assign({}, currentNotes[idx], n);
+  const card = document.querySelector('.note-card[data-id="' + n.id + '"]');
+  if (!card) return;
+  const reports = currentNotes[idx].reports || 0;
+  const isFlagged = isOwner && reports > 0;
+  card.classList.toggle('flagged', isFlagged);
+  const actionsRow = card.querySelector('.note-actions-row');
+  if (!actionsRow) return;
+  let tag = actionsRow.querySelector('.reports-tag');
+  if (isFlagged) {
+    const label = '⚠ ' + reports + ' report' + (reports === 1 ? '' : 's');
+    if (tag) {
+      tag.textContent = label;
+    } else {
+      tag = document.createElement('span');
+      tag.className = 'reports-tag';
+      tag.textContent = label;
+      actionsRow.insertBefore(tag, actionsRow.firstChild);
+    }
+  } else if (tag) {
+    tag.remove();
+  }
+}
+
+function handleNoteDelete(oldRow) {
+  const idx = currentNotes.findIndex(x => x.id === oldRow.id);
+  if (idx === -1) return;
+  currentNotes.splice(idx, 1);
+  delete repliesCache[oldRow.id];
+  const mainScroll = document.querySelector('.main-scroll');
+  const prevWindowY = window.scrollY;
+  const prevMainY = mainScroll ? mainScroll.scrollTop : 0;
+  const card = document.querySelector('.note-card[data-id="' + oldRow.id + '"]');
+  if (card) card.remove();
+  window.scrollTo(0, prevWindowY);
+  if (mainScroll) mainScroll.scrollTop = prevMainY;
+  updateCounts();
+  buildArchive();
+  updateLiveNow();
+}
+
+function handleReplyInsert(r) {
+  if (!repliesCache[r.note_id]) repliesCache[r.note_id] = [];
+  if (!repliesCache[r.note_id].find(x => x.id === r.id)) {
+    repliesCache[r.note_id].push(r);
+  }
+  patchReplyUIForNote(r.note_id, false);
+}
+
+function handleReplyUpdate(r) {
+  const loc = findCachedReply(r.id);
+  const noteId = loc ? loc.noteId : r.note_id;
+  if (loc) repliesCache[loc.noteId][loc.idx] = Object.assign({}, repliesCache[loc.noteId][loc.idx], r);
+  patchReplyUIForNote(noteId, false);
+}
+
+function handleReplyDelete(oldRow) {
+  // Try the direct DOM removal regardless of cache lookup — covers a reply rendered
+  // somewhere the cache lookup might miss.
+  document.querySelectorAll('.reply-block[data-reply-id="' + oldRow.id + '"]').forEach(el => el.remove());
+  const loc = findCachedReply(oldRow.id);
+  if (!loc) return;
+  repliesCache[loc.noteId].splice(loc.idx, 1);
+  patchReplyUIForNote(loc.noteId, false);
+}
+
+let realtimeChannel = null;
+function initRealtimeChannels() {
+  // Tear down any previous channel first so a re-init (e.g. a future reconnect) never
+  // stacks a second set of listeners on top of the first.
+  if (realtimeChannel) {
+    db.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  try {
+    realtimeChannel = db.channel('dq-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, payload => {
+        if (payload.eventType === 'INSERT') handleNoteInsert(payload.new);
+        else if (payload.eventType === 'UPDATE') handleNoteUpdate(payload.new);
+        else if (payload.eventType === 'DELETE') handleNoteDelete(payload.old);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'replies' }, payload => {
+        if (payload.eventType === 'INSERT') handleReplyInsert(payload.new);
+        else if (payload.eventType === 'UPDATE') handleReplyUpdate(payload.new);
+        else if (payload.eventType === 'DELETE') handleReplyDelete(payload.old);
+      })
+      .subscribe();
+  } catch (e) { /* realtime optional */ }
+}
+initRealtimeChannels();
+
+// ── INIT ──
+const t = todayLocal();
+selectedYear = t.year;
+selectedMonth = t.month;
+selectedDay = t.day;
+
+// Expand current year and month by default so today is visible
+expandedYears.add(String(t.year));
+expandedMonths.add(`${t.year}-${t.month}`);
+
+const _initDate = new Date(t.year, t.month - 1, t.day);
+document.getElementById('mainTitle').innerHTML = `${MONTHS[t.month-1]} <em>${t.day}</em>, ${t.year}`;
+document.getElementById('mainStats').textContent = `${DAYS[_initDate.getDay()]} · loading…`;
+
+if (secondsUntilCanPost() > 0) startRateLimitCountdown();
+
+detectLocation();
+// Load today's prompt first, then past prompts (which exclude whatever's shown at top)
+loadTodayPrompt().then(() => loadPastPrompts());
+buildArchive();
+updateLiveNow();
+updateQuote();
+loadNotes();
+
+// Wire up "back to today" button in the past-day notice
+document.getElementById('goToTodayBtn').onclick = () => {
+  const now = todayLocal();
+  selectedYear = now.year;
+  selectedMonth = now.month;
+  selectedDay = now.day;
+  renderArchiveTree();
+  loadNotes(); // loadNotes will scroll to top automatically
+  loadTodayPrompt();
+  updateQuote();
+};
+
+// Register the service worker so the site is installable to the home screen
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* installability is nice-to-have, not critical */ });
+  });
+}
+
+</script>
+</body>
+</html>
