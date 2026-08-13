@@ -3912,10 +3912,21 @@ async function buildArchive() {
       archiveData[y][m][day] = (archiveData[y][m][day] || 0) + 1;
     });
 
-    // Fill in ALL days from launch to today so zero-note days still appear
-    const LAUNCH = new Date(2026, 3, 20); // Apr 20, 2026
+    // Fill in every day from the earliest real note (or today, if there are none yet)
+    // through today, so zero-note days still appear without a hardcoded launch date
+    // that goes stale — this adapts automatically whenever the data starts fresh.
     const t = todayLocal();
     const todayDate = new Date(t.year, t.month - 1, t.day);
+    let LAUNCH;
+    if (data.length > 0) {
+      const earliest = data.reduce((min, n) => {
+        const d = new Date(n.created_at);
+        return d < min ? d : min;
+      }, new Date(data[0].created_at));
+      LAUNCH = new Date(earliest.getFullYear(), earliest.getMonth(), earliest.getDate());
+    } else {
+      LAUNCH = todayDate;
+    }
     for (let d = new Date(LAUNCH); d <= todayDate; d.setDate(d.getDate() + 1)) {
       const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
       archiveData[y] ??= {};
