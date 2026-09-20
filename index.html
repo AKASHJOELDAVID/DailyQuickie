@@ -2517,7 +2517,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ta.addEventListener('input', () => {
     const len = ta.value.length;
     if (len >= MAX_NOTE_LENGTH) {
-      warn.textContent = `that's the limit — keep it a quickie 😉 (${len}/${MAX_NOTE_LENGTH})`;
+      warn.textContent = `that's the limit — keep it a quickie (${len}/${MAX_NOTE_LENGTH})`;
       warn.className = 'nudge-warning active';
     } else {
       warn.textContent = '';
