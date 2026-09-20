@@ -1911,7 +1911,7 @@
           <span class="compose-lbl">posting from</span>
           <span class="location-tag" id="locationTag">detecting…</span>
         </div>
-        <textarea class="note-ta" id="noteBody" placeholder="rant, drop an insight, say whatever's on your mind. anything goes. just keep it a quickie."></textarea>
+        <textarea class="note-ta" id="noteBody" maxlength="200" placeholder="rant, drop an insight, say whatever's on your mind. anything goes. just keep it a quickie."></textarea>
         <div class="nudge-warning" id="nudgeWarning"></div>
         <div class="error-msg" id="errorMsg"></div>
         <div class="compose-foot">
@@ -2508,7 +2508,7 @@ function lockNicknameAfterPost(nickname) {
   }
 }
 
-// ── LENGTH NUDGE (500 chars soft) ──
+// ── LENGTH NUDGE ──
 document.addEventListener('DOMContentLoaded', () => {
   initNickname();
   ensureNicknameClaimed();
@@ -2516,8 +2516,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const warn = document.getElementById('nudgeWarning');
   ta.addEventListener('input', () => {
     const len = ta.value.length;
-    if (len > 500) {
-      warn.textContent = `getting a little long — keep it a quickie 😉 (${len} chars)`;
+    if (len >= MAX_NOTE_LENGTH) {
+      warn.textContent = `that's the limit — keep it a quickie 😉 (${len}/${MAX_NOTE_LENGTH})`;
       warn.className = 'nudge-warning active';
     } else {
       warn.textContent = '';
@@ -2529,11 +2529,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── CONTENT FILTER ──
 // Returns { ok: true } or { ok: false, reason: "..." }
 // All content filters removed per owner request. Report + delete handle moderation.
-// Only blocks empty content.
+// Blocks empty content and anything over the length cap — same limit for notes and
+// replies, enforced here (not just via maxlength on the textarea) so pasted-in text
+// over the limit is caught too, not just typed text.
+const MAX_NOTE_LENGTH = 200;
 
 function checkContent(text) {
   const trimmed = (text || '').trim();
   if (!trimmed) return { ok: false, reason: 'empty' };
+  if (trimmed.length > MAX_NOTE_LENGTH) return { ok: false, reason: `keep it under ${MAX_NOTE_LENGTH} characters` };
   return { ok: true };
 }
 
@@ -3138,6 +3142,7 @@ function buildComposeBox(noteId, parentReplyId, replyToLabel) {
   const bodyInput = document.createElement('textarea');
   bodyInput.className = mobile ? 'mobile-reply-input' : 'reply-body-input';
   bodyInput.placeholder = 'write a reply...';
+  bodyInput.maxLength = MAX_NOTE_LENGTH;
   bodyInput.rows = 1;
   bodyInput.addEventListener('input', function() {
     bodyInput.style.height = 'auto';
@@ -3156,7 +3161,8 @@ function buildComposeBox(noteId, parentReplyId, replyToLabel) {
 
   async function submitReply() {
     const body = bodyInput.value.trim();
-    if (!body) return;
+    const check = checkContent(body);
+    if (!check.ok) return;
     submitBtn.disabled = true;
     if (!mobile) submitBtn.textContent = 'posting...';
 
