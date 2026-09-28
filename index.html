@@ -2132,6 +2132,14 @@ function todayLocal() {
   return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10), day: parseInt(parts[2], 10) };
 }
 
+// True when the day being viewed is today (Melbourne time). Replies are only open on today.
+function isViewingToday() {
+  const t = todayLocal();
+  return (selectedYear || t.year) === t.year &&
+         (selectedMonth || t.month) === t.month &&
+         (selectedDay || t.day) === t.day;
+}
+
 // Melbourne-local "today" (for prompt lookup)
 function todayMelbourne() {
   const d = new Date();
@@ -2541,8 +2549,8 @@ function checkContent(text) {
   return { ok: true };
 }
 
-// ── RATE LIMIT (15 sec between posts) ──
-const RATE_LIMIT_SECONDS = 15;
+// ── RATE LIMIT (5 sec between posts) ──
+const RATE_LIMIT_SECONDS = 5;
 let rateLimitInterval = null;
 
 function getLastPostTime() {
@@ -3072,11 +3080,12 @@ async function openRepliesOverlay(noteId) {
   document.body.classList.add('replies-overlay-open');
 
   const replies = await loadReplies(noteId);
-  renderAllReplies(replies, noteId, threadContainer, false);
+  const readOnly = !isViewingToday();
+  renderAllReplies(replies, noteId, threadContainer, readOnly);
 
-  // The main reply bar shows automatically no matter which trigger opened this
-  // overlay — tapping "reply" or tapping "N replies" both land you here with it ready.
-  buildComposeBox(noteId, null, note.nickname || 'anonymous');
+  // On today, the reply bar shows automatically. On an older day the thread is
+  // read-only: no reply bar, and every reply button inside it is disabled.
+  if (!readOnly) buildComposeBox(noteId, null, note.nickname || 'anonymous');
 }
 
 // Called after a reply is posted or deleted — keeps an open overlay in sync
@@ -3087,7 +3096,7 @@ async function refreshOpenRepliesOverlay(noteId) {
   const threadContainer = overlay.querySelector('.reply-thread');
   if (!threadContainer) return;
   const replies = await loadReplies(noteId, true);
-  renderAllReplies(replies, noteId, threadContainer, false);
+  renderAllReplies(replies, noteId, threadContainer, !isViewingToday());
 }
 
 function toggleReplyCompose(btn, noteId, parentReplyId) {
