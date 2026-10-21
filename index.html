@@ -3747,14 +3747,23 @@ async function loadNotes(opts = {}) {
   const to = new Date(y, m - 1, d, 23, 59, 59).toISOString();
 
   try {
-    const { data, error } = await db
-      .from('notes')
-      .select('*')
-      .gte('created_at', from)
-      .lte('created_at', to)
-      .order('created_at', { ascending: false });
-
-    currentNotes = (error || !data) ? [] : data;
+        // Load in pages of 1000 so a day can hold any number of notes
+    const all = [];
+    const PAGE = 1000;
+    let failed = false;
+    for (let start = 0; ; start += PAGE) {
+      const { data: page, error } = await db
+        .from('notes')
+        .select('*')
+        .gte('created_at', from)
+        .lte('created_at', to)
+        .order('created_at', { ascending: false })
+        .range(start, start + PAGE - 1);
+      if (error || !page) { failed = true; break; }
+      all.push(...page);
+      if (page.length < PAGE) break;
+    }
+    currentNotes = failed ? [] : all;
   } catch (e) {
     currentNotes = [];
   }
@@ -3915,8 +3924,19 @@ async function updateQuote() {
 
 async function buildArchive() {
   try {
-    const { data, error } = await db.from('notes').select('created_at');
-    if (error || !data) return;
+        // Supabase returns max 1000 rows per request, so fetch in pages until done
+    const data = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data: page, error } = await db
+        .from('notes')
+        .select('created_at')
+        .order('created_at', { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error || !page) return;
+      data.push(...page);
+      if (page.length < PAGE) break;
+    }
 
     archiveData = {};
     data.forEach(n => {
