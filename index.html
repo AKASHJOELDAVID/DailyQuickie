@@ -2866,7 +2866,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
   } else {
     const delBtn = document.createElement('button');
     delBtn.className = 'owner-delete';
-    delBtn.textContent = (r.reports || 0) > 0 ? `delete (⚠ ${r.reports})` : 'delete';
+    delBtn.textContent = (r.reports || 0) > 0 ? `delete (⚠ ${formatCount(r.reports)})` : 'delete';
     delBtn.addEventListener('click', function() { ownerDeleteReply(r.id, noteId); });
     reportOrDeleteBtn = delBtn;
   }
@@ -2898,7 +2898,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
       roBtnRow.appendChild(roSep);
       const roCountBtn = document.createElement('button');
       roCountBtn.className = 'reply-btn';
-      roCountBtn.innerHTML = '&#8627; ' + descCount + ' repl' + (descCount === 1 ? 'y' : 'ies');
+      roCountBtn.innerHTML = '&#8627; ' + formatCount(descCount) + ' repl' + (descCount === 1 ? 'y' : 'ies');
       roBtnRow.appendChild(roCountBtn);
       const nested = document.createElement('div');
       nested.className = 'nested-thread';
@@ -2954,7 +2954,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
     btnRow.appendChild(sep);
     const countBtn = document.createElement('button');
     countBtn.className = 'reply-btn';
-    countBtn.innerHTML = '&#8627; ' + countDescendants(r.id, allReplies) + ' repl' + (countDescendants(r.id, allReplies) === 1 ? 'y' : 'ies');
+    countBtn.innerHTML = '&#8627; ' + formatCount(countDescendants(r.id, allReplies)) + ' repl' + (countDescendants(r.id, allReplies) === 1 ? 'y' : 'ies');
     const nested = document.createElement('div');
     nested.className = 'nested-thread';
     nested.style.display = expandedRepliesLocal.has(r.id) ? '' : 'none';
@@ -3318,7 +3318,7 @@ async function attachReplies(card, noteId, keepOpen, forceRefresh) {
       pastReplyBtn.insertAdjacentElement('afterend', sep);
       const countBtn = document.createElement('button');
       countBtn.className = 'reply-toggle-btn reply-count-btn';
-      countBtn.innerHTML = '&#8627; ' + total + ' repl' + (total === 1 ? 'y' : 'ies') + flagBadge;
+      countBtn.innerHTML = '&#8627; ' + formatCount(total) + ' repl' + (total === 1 ? 'y' : 'ies') + flagBadge;
       sep.insertAdjacentElement('afterend', countBtn);
       const thread = document.createElement('div');
       thread.className = 'reply-thread';
@@ -3480,7 +3480,7 @@ function renderFeed(opts = {}) {
     const reports = n.reports || 0;
     const isFlagged = isOwner && reports > 0;
     const reportsTag = isFlagged
-      ? `<span class="reports-tag">⚠ ${reports} report${reports === 1 ? '' : 's'}</span>`
+      ? `<span class="reports-tag">⚠ ${formatCount(reports)} report${reports === 1 ? '' : 's'}</span>`
       : '';
 
     // Right-side action: owner sees Delete, everyone else sees Report
@@ -3614,7 +3614,7 @@ async function ownerDeleteReply(id, noteId) {
   const allReplies = repliesCache[noteId] || [];
   const descCount = countDescendants(id, allReplies);
   const msg = descCount > 0
-    ? `Delete this reply and its ${descCount} nested repl${descCount === 1 ? 'y' : 'ies'}? This cannot be undone.`
+    ? `Delete this reply and its ${formatCount(descCount)} nested repl${descCount === 1 ? 'y' : 'ies'}? This cannot be undone.`
     : 'Delete this reply? This cannot be undone.';
   if (!confirm(msg)) return;
 
@@ -3647,8 +3647,13 @@ async function ownerDeleteReply(id, noteId) {
 // Compact display for large numbers: 999 stays "999", 1000+ becomes "1k", "1.2k", "12.3k", etc.
 function formatCount(n) {
   if (n < 1000) return String(n);
-  const rounded = Math.floor((n / 1000) * 10) / 10;
-  return (rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)) + 'k';
+  const units = [[1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+  for (const [size, suffix] of units) {
+    if (n >= size) {
+      const v = Math.floor(n / (size / 10)) / 10;
+      return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + suffix;
+    }
+  }
 }
 
 function updateCounts() {
@@ -3690,7 +3695,7 @@ function updateCounts() {
   const noteWord = (n) => n === 1 ? 'note' : 'notes';
   let statsHtml;
   const flagPart = (isOwner && flaggedCount > 0)
-    ? ` · <span class="stats-flag-count">⚠ ${flaggedCount} flagged</span>`
+    ? ` · <span class="stats-flag-count">⚠ ${formatCount(flaggedCount)} flagged</span>`
     : '';
   if (isToday) {
     const dayName = DAYS[viewedDate.getDay()];
@@ -4017,7 +4022,7 @@ function renderArchiveTree() {
 
         const mBtn = document.createElement('button');
         mBtn.className = 'month-btn' + (isSelMonth ? ' active' : '');
-        mBtn.innerHTML = `<span>${MONTHS[m-1]}</span><span style="display:flex;align-items:center;gap:8px;"><span class="month-count">${mCount || ''}</span><span class="chevron-small ${isMonthExpanded ? 'open' : ''}">▾</span></span>`;
+        mBtn.innerHTML = `<span>${MONTHS[m-1]}</span><span style="display:flex;align-items:center;gap:8px;"><span class="month-count">${mCount ? formatCount(mCount) : ''}</span><span class="chevron-small ${isMonthExpanded ? 'open' : ''}">▾</span></span>`;
         mBtn.onclick = () => {
           if (expandedMonths.has(monthKey)) {
             expandedMonths.delete(monthKey);
@@ -4041,7 +4046,7 @@ function renderArchiveTree() {
             const dc = archiveData[y] && archiveData[y][m] && archiveData[y][m][day] ? archiveData[y][m][day] : 0;
             const dBtn = document.createElement('button');
             dBtn.className = 'day-btn' + (isSelDay ? ' active' : '');
-            dBtn.innerHTML = `<span><span class="day-num">${String(day).padStart(2,'0')}</span>${isTodayDay ? '<span class="day-today-label">today</span>' : ''}</span><span class="day-count">${dc}</span>`;
+            dBtn.innerHTML = `<span><span class="day-num">${String(day).padStart(2,'0')}</span>${isTodayDay ? '<span class="day-today-label">today</span>' : ''}</span><span class="day-count">${formatCount(dc)}</span>`;
             dBtn.onclick = () => {
               selectedYear = parseInt(y);
               selectedMonth = parseInt(m);
@@ -4246,7 +4251,7 @@ function handleNoteUpdate(n) {
   if (!actionsRow) return;
   let tag = actionsRow.querySelector('.reports-tag');
   if (isFlagged) {
-    const label = '⚠ ' + reports + ' report' + (reports === 1 ? '' : 's');
+    const label = '⚠ ' + formatCount(reports) + ' report' + (reports === 1 ? '' : 's');
     if (tag) {
       tag.textContent = label;
     } else {
