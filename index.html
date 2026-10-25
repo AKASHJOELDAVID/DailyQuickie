@@ -235,6 +235,11 @@
     .day-btn .day-num { letter-spacing: 0.02em; }
     .day-btn .day-today-label { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink2); margin-left: 6px; }
     .day-count { font-size: 9px; color: var(--ink3); }
+    .month-count, .day-count, #countAll, #countOn, #countOff {
+      font-family: var(--sans);
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
 
     .past-prompt-item { margin-bottom: 14px; }
     .past-prompt-date {
@@ -3651,7 +3656,7 @@ function formatCount(n) {
   for (const [size, suffix] of units) {
     if (n >= size) {
       const v = Math.floor(n / (size / 10)) / 10;
-      return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + '\u200A' + suffix;
+      return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + suffix;
     }
   }
 }
