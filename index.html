@@ -3384,7 +3384,7 @@ async function attachReplies(card, noteId, keepOpen, forceRefresh) {
 
     const thread = document.createElement('div');
     thread.className = 'reply-thread';
-    thread.style.display = (keepOpen || expandedRepliesLocal.has(noteId)) ? '' : 'none';
+    thread.style.display = (!isMobileView() && (keepOpen || expandedRepliesLocal.has(noteId))) ? '' : 'none';
     renderAllReplies(replies, noteId, thread, false);
     actionsRow.insertAdjacentElement('afterend', thread);
 
