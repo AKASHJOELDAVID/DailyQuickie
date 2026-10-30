@@ -1574,6 +1574,29 @@
       padding-left: 12px;
       margin-top: 4px;
     }
+        /* deeper than level 3: no more stepping right, no line */
+    .nested-thread .nested-thread {
+      margin-left: 0;
+      padding-left: 0;
+      border-left: none;
+    }
+    /* key: which reply this one is answering */
+    .reply-key {
+      display: inline-block;
+      max-width: 100%;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 11px;
+      color: var(--ink3);
+      background: rgba(120, 100, 60, 0.08);
+      border-left: 2px solid var(--accent);
+      border-radius: 2px;
+      padding: 1px 7px;
+      margin: 2px 0 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     /* reply compose box */
     .reply-compose {
       margin-top: 8px;
@@ -2812,7 +2835,7 @@ function countDescendants(id, allReplies) {
   return direct.reduce(function(sum, c) { return sum + 1 + countDescendants(c.id, allReplies); }, 0);
 }
 
-function buildReplyBlock(r, allReplies, noteId, readOnly) {
+function buildReplyBlock(r, allReplies, noteId, readOnly, depth, parentReply) {
   const block = document.createElement('div');
   block.className = 'reply-block';
   block.dataset.replyId = r.id;
@@ -2917,6 +2940,13 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
   bodyEl.textContent = r.body;
 
   block.appendChild(meta);
+  if ((depth || 2) >= 4 && parentReply) {
+    const keyEl = document.createElement('div');
+    keyEl.className = 'reply-key';
+    const snippet = (parentReply.body || '').replace(/\s+/g, ' ').trim();
+    keyEl.textContent = '↳ ' + (snippet.length > 15 ? snippet.slice(0, 15) + '…' : snippet);
+    block.appendChild(keyEl);
+  }
   block.appendChild(bodyEl);
 
   const children = sortReplies(allReplies.filter(function(c) { return c.parent_reply_id === r.id; }), allReplies);
@@ -2945,7 +2975,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
       nested.className = 'nested-thread';
       nested.style.display = expandedRepliesLocal.has(r.id) ? '' : 'none';
       children.forEach(function(child) {
-        nested.appendChild(buildReplyBlock(child, allReplies, noteId, true));
+            nested.appendChild(buildReplyBlock(child, allReplies, noteId, true, (depth || 2) + 1, r));
       });
       roCountBtn.addEventListener('click', function() {
         const nowHidden = nested.style.display !== 'none';
@@ -3000,7 +3030,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly) {
     nested.className = 'nested-thread';
     nested.style.display = expandedRepliesLocal.has(r.id) ? '' : 'none';
     children.forEach(function(child) {
-      nested.appendChild(buildReplyBlock(child, allReplies, noteId, false));
+        nested.appendChild(buildReplyBlock(child, allReplies, noteId, false, (depth || 2) + 1, r));
     });
     countBtn.addEventListener('click', function() {
       const willHide = nested.style.display !== 'none';
