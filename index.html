@@ -2159,6 +2159,42 @@ function todayMelbourne() {
   return `${y}-${m}-${day}`; // YYYY-MM-DD
 }
 
+  // Melbourne calendar date of any timestamp (so a note always belongs to the same
+// day for everyone, wherever they are)
+function melbourneDateOf(iso) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: MELBOURNE_TZ, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date(iso));
+  const get = t => parseInt(parts.find(p => p.type === t).value, 10);
+  return { year: get('year'), month: get('month'), day: get('day') };
+}
+
+// Start (inclusive) and end (exclusive) of one Melbourne calendar day, as ISO timestamps
+function melbourneDayBounds(y, m, d) {
+  const startOf = (yy, mm, dd) => {
+    const target = Date.UTC(yy, mm - 1, dd, 0, 0, 0);
+    let guess = target;
+    for (let i = 0; i < 3; i++) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: MELBOURNE_TZ, hourCycle: 'h23',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }).formatToParts(new Date(guess));
+      const g = t => parseInt(parts.find(p => p.type === t).value, 10);
+      const shown = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
+      const diff = target - shown;
+      if (diff === 0) break;
+      guess += diff;
+    }
+    return guess;
+  };
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  return {
+    from: new Date(startOf(y, m, d)).toISOString(),
+    to: new Date(startOf(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate())).toISOString()
+  };
+}
+
 // Format time like "2:14 pm"
 function fmtTime(iso) {
   const d = new Date(iso);
@@ -3753,8 +3789,7 @@ async function loadNotes(opts = {}) {
   const m = selectedMonth || t.month;
   const d = selectedDay || t.day;
 
-  const from = new Date(y, m - 1, d, 0, 0, 0).toISOString();
-  const to = new Date(y, m - 1, d, 23, 59, 59).toISOString();
+  const { from, to } = melbourneDayBounds(y, m, d);
 
   try {
         // Load in pages of 1000 so a day can hold any number of notes
@@ -3766,7 +3801,7 @@ async function loadNotes(opts = {}) {
         .from('notes')
         .select('*')
         .gte('created_at', from)
-        .lte('created_at', to)
+        .lt('created_at', to)
         .order('created_at', { ascending: false })
         .range(start, start + PAGE - 1);
       if (error || !page) { failed = true; break; }
@@ -3950,8 +3985,8 @@ async function buildArchive() {
 
     archiveData = {};
     data.forEach(n => {
-      const d = new Date(n.created_at);
-      const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+      const md = melbourneDateOf(n.created_at);
+      const y = md.year, m = md.month, day = md.day;
       archiveData[y] ??= {};
       archiveData[y][m] ??= {};
       archiveData[y][m][day] = (archiveData[y][m][day] || 0) + 1;
@@ -3968,7 +4003,8 @@ async function buildArchive() {
         const d = new Date(n.created_at);
         return d < min ? d : min;
       }, new Date(data[0].created_at));
-      LAUNCH = new Date(earliest.getFullYear(), earliest.getMonth(), earliest.getDate());
+      const ed = melbourneDateOf(earliest);
+      LAUNCH = new Date(ed.year, ed.month - 1, ed.day);
     } else {
       LAUNCH = todayDate;
     }
@@ -4228,9 +4264,10 @@ function findCachedReply(replyId) {
 
 function handleNoteInsert(n) {
   const t = todayLocal();
-  const sameDay = new Date(n.created_at).getFullYear() === (selectedYear || t.year) &&
-                  new Date(n.created_at).getMonth() + 1 === (selectedMonth || t.month) &&
-                  new Date(n.created_at).getDate() === (selectedDay || t.day);
+  const nd = melbourneDateOf(n.created_at);
+  const sameDay = nd.year === (selectedYear || t.year) &&
+                  nd.month === (selectedMonth || t.month) &&
+                  nd.day === (selectedDay || t.day);
   if (sameDay && !currentNotes.find(x => x.id === n.id)) {
     currentNotes.unshift(n);
     updateCounts();
@@ -4360,6 +4397,17 @@ buildArchive();
 updateLiveNow();
 updateQuote();
 loadNotes();
+
+// If the page stays open past Melbourne midnight, reload so the new day and prompt appear.
+// Waits if someone is mid-way through writing a note or reply, so nothing gets wiped.
+const pageLoadedDay = todayMelbourne();
+setInterval(() => {
+  if (todayMelbourne() === pageLoadedDay) return;
+  const writing = document.getElementById('noteBody').value.trim() !== '' ||
+                  document.querySelector('.reply-compose, .mobile-reply-sheet');
+  if (writing) return;
+  location.reload();
+}, 30000);
 
 // Wire up "back to today" button in the past-day notice
 document.getElementById('goToTodayBtn').onclick = () => {
