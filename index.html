@@ -701,6 +701,67 @@
       background: var(--ink3);
       cursor: not-allowed;
     }
+    
+    /* ── QUICK-WRITE BAR + POP-UP COMPOSE ── */
+    .quickbar {
+      position: fixed;
+      left: var(--sidebar-w); right: 0; bottom: 0;
+      z-index: 900;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      cursor: pointer;
+    }
+    .quickbar.show { display: flex; }
+    .quickbar-in {
+      flex: 1;
+      font-family: var(--sans);
+      font-style: italic;
+      font-size: 14px;
+      color: var(--ink3);
+      background: var(--bg);
+      border: 1px solid var(--border3);
+      border-radius: 6px;
+      padding: 9px 12px;
+    }
+    .quickbar-go {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .compose-backdrop {
+      position: fixed; inset: 0;
+      z-index: 1000;
+      background: rgba(20, 18, 14, 0.4);
+      display: none;
+    }
+    .compose-backdrop.show { display: block; }
+    .compose.compose-popup {
+      position: fixed;
+      left: var(--sidebar-w); right: 0; bottom: 0;
+      z-index: 1001;
+      margin: 0;
+      border-radius: 12px 12px 0 0;
+      border-bottom: none;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .compose-popup-close {
+      display: none;
+      position: absolute; top: 8px; right: 12px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--sans); font-size: 18px; color: var(--ink2);
+    }
+    .compose-popup .compose-popup-close { display: block; }
+    @media (max-width: 720px) {
+      .quickbar, .compose.compose-popup { left: 0; }
+    }
 
     /* ── FEED HEADER + FILTER ── */
     .feed-header {
@@ -1868,6 +1929,13 @@
     </div>
   </aside>
 
+    <!-- QUICK-WRITE BAR (shows when the top compose box scrolls out of view) -->
+  <div class="compose-backdrop" id="composeBackdrop"></div>
+  <div class="quickbar" id="quickBar">
+    <div class="quickbar-in">say whatever's on your mind…</div>
+    <span class="quickbar-go">write</span>
+  </div>
+  
   <!-- MAIN -->
   <main class="main">
     <div class="main-header">
@@ -1909,6 +1977,7 @@
 
       <!-- COMPOSE -->
       <div class="compose" id="composeBlock">
+        <button class="compose-popup-close" id="composePopupClose" type="button" aria-label="close">✕</button>
         <!-- Nickname: first-time, locked, or changing — one of these shown at a time -->
         <div id="nickFirstRow" style="display:none;">
           <div class="compose-first-badge">first time</div>
@@ -4225,19 +4294,23 @@ async function postNote() {
       document.getElementById('nudgeWarning').textContent = '';
       document.getElementById('onPromptCheckbox').checked = false;
       setLastPostTime();
+      const wasPopup = !!qwBlock && qwBlock.classList.contains('compose-popup');
+      closeComposePopup();
 
       const t = todayLocal();
       if ((!selectedDay || selectedDay === t.day) && (!selectedMonth || selectedMonth === t.month) && (!selectedYear || selectedYear === t.year)) {
         currentNotes.unshift(data);
         updateCounts();
-        renderFeed({ scrollToTop: true });
+        renderFeed({ scrollToTop: !wasPopup });
         loadAllReplies();
-        // Scroll to top so the poster sees their new note land at the top of the feed
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        const mainScroll = document.querySelector('.main-scroll');
-        if (mainScroll) mainScroll.scrollTop = 0;
+        if (!wasPopup) {
+          // posted from the top box: scroll up so the poster sees their new note
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          const mainScroll = document.querySelector('.main-scroll');
+          if (mainScroll) mainScroll.scrollTop = 0;
+        }
       }
       await buildArchive();
       updateLiveNow();
@@ -4401,6 +4474,55 @@ function initRealtimeChannels() {
   } catch (e) { /* realtime optional */ }
 }
 initRealtimeChannels();
+
+// ── QUICK-WRITE BAR ──
+// A slim bar at the bottom appears once the top compose box has scrolled out of
+// view. Tapping it pops the same compose box up as a sheet, so you can write
+// without scrolling back to the top.
+const qwBar = document.getElementById('quickBar');
+const qwBackdrop = document.getElementById('composeBackdrop');
+const qwBlock = document.getElementById('composeBlock');
+let qwSpacer = null;
+let qwInView = true;
+
+function qwAvailable() {
+  return !!qwBlock && getComputedStyle(qwBlock).display !== 'none';
+}
+function qwUpdateBar() {
+  if (!qwBar || !qwBlock) return;
+  const popupOpen = qwBlock.classList.contains('compose-popup');
+  qwBar.classList.toggle('show', qwAvailable() && !qwInView && !popupOpen);
+}
+function openComposePopup() {
+  if (!qwAvailable() || qwBlock.classList.contains('compose-popup')) return;
+  // leave a same-height gap where the box was, so the feed doesn't jump
+  qwSpacer = document.createElement('div');
+  qwSpacer.style.height = (qwBlock.offsetHeight + 32) + 'px';
+  qwBlock.parentNode.insertBefore(qwSpacer, qwBlock);
+  qwBlock.classList.add('compose-popup');
+  qwBackdrop.classList.add('show');
+  qwUpdateBar();
+  const ta = document.getElementById('noteBody');
+  if (ta) ta.focus();
+}
+function closeComposePopup() {
+  if (!qwBlock || !qwBlock.classList.contains('compose-popup')) return;
+  qwBlock.classList.remove('compose-popup');
+  qwBackdrop.classList.remove('show');
+  if (qwSpacer) { qwSpacer.remove(); qwSpacer = null; }
+  qwUpdateBar();
+}
+if ('IntersectionObserver' in window && qwBlock) {
+  new IntersectionObserver(function(entries) {
+    qwInView = entries[0].isIntersecting;
+    qwUpdateBar();
+  }).observe(qwBlock);
+}
+if (qwBar) qwBar.addEventListener('click', openComposePopup);
+if (qwBackdrop) qwBackdrop.addEventListener('click', closeComposePopup);
+const qwClose = document.getElementById('composePopupClose');
+if (qwClose) qwClose.addEventListener('click', closeComposePopup);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeComposePopup(); });
 
 // ── INIT ──
 const t = todayLocal();
