@@ -718,6 +718,7 @@
     .quickbar.show { display: flex; }
     body.replies-overlay-open .quickbar,
     body.mobile-reply-open .quickbar { display: none !important; }
+    body.quickbar-on .main-scroll { padding-bottom: 96px; }
     .quickbar-in {
       flex: 1;
       font-family: var(--sans);
@@ -4508,6 +4509,11 @@ function qwUpdateBar() {
   if (!qwBar || !qwBlock) return;
   const popupOpen = qwBlock.classList.contains('compose-popup');
   qwBar.classList.toggle('show', qwAvailable() && !qwInView && !popupOpen);
+  // leave room at the bottom of the page so the footer isn't hidden behind the bar
+  document.body.classList.toggle('quickbar-on', qwAvailable() && !qwInView);
+  // stop the bar short of the main page's own scrollbar (desktop)
+  const qwScroller = document.querySelector('.main-scroll');
+  qwBar.style.right = (qwScroller ? (qwScroller.offsetWidth - qwScroller.clientWidth) : 0) + 'px';
 }
 function openComposePopup() {
   if (!qwAvailable() || qwBlock.classList.contains('compose-popup')) return;
