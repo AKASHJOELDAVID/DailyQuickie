@@ -720,6 +720,31 @@
     body.replies-overlay-open .quickbar,
     body.mobile-reply-open .quickbar { display: none !important; }
     body.quickbar-on .main-scroll { padding-bottom: 68px; }
+    .backbar { justify-content: space-between; cursor: default; }
+    .backbar-text {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--ink2);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .backbar-text em { color: var(--ink); }
+    .backbar-btn {
+      flex-shrink: 0;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 4px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .backbar-btn:active { transform: scale(0.97); }
     .quickbar-in {
       flex: 1;
       font-family: var(--sans);
@@ -1947,6 +1972,11 @@
   <div class="quickbar" id="quickBar">
     <div class="quickbar-in">say whatever's on your mind…</div>
     <span class="quickbar-go">write</span>
+  </div>
+  <!-- BACK-TO-TODAY BAR (old days only, shows when the top notice scrolls out of view) -->
+  <div class="quickbar backbar" id="backBar">
+    <span class="backbar-text"><em>got something to say?</em></span>
+    <button class="backbar-btn" id="backBarBtn" type="button">back to today →</button>
   </div>
   
   <!-- MAIN -->
@@ -4507,15 +4537,27 @@ let qwInView = true;
 function qwAvailable() {
   return !!qwBlock && getComputedStyle(qwBlock).display !== 'none';
 }
+const qwBack = document.getElementById('backBar');
+const qwNotice = document.getElementById('pastDayNotice');
+let qwNoticeInView = true;
+
+function qwNoticeAvailable() {
+  return !!qwNotice && getComputedStyle(qwNotice).display !== 'none';
+}
 function qwUpdateBar() {
   if (!qwBar || !qwBlock) return;
   const popupOpen = qwBlock.classList.contains('compose-popup');
-  qwBar.classList.toggle('show', qwAvailable() && !qwInView && !popupOpen);
-  // leave room at the bottom of the page so the footer isn't hidden behind the bar
-  document.body.classList.toggle('quickbar-on', qwAvailable() && !qwInView);
-  // stop the bar short of the main page's own scrollbar (desktop)
+  const showWrite = qwAvailable() && !qwInView && !popupOpen;
+  const showBack = qwNoticeAvailable() && !qwNoticeInView;
+  qwBar.classList.toggle('show', showWrite);
+  if (qwBack) qwBack.classList.toggle('show', showBack);
+  // leave room at the bottom of the page so the footer isn't hidden behind a bar
+  document.body.classList.toggle('quickbar-on', (qwAvailable() && !qwInView) || showBack);
+  // stop the bars short of the main page's own scrollbar (desktop)
   const qwScroller = document.querySelector('.main-scroll');
-  qwBar.style.right = (qwScroller ? (qwScroller.offsetWidth - qwScroller.clientWidth) : 0) + 'px';
+  const qwRight = (qwScroller ? (qwScroller.offsetWidth - qwScroller.clientWidth) : 0) + 'px';
+  qwBar.style.right = qwRight;
+  if (qwBack) qwBack.style.right = qwRight;
 }
 function openComposePopup() {
   if (!qwAvailable() || qwBlock.classList.contains('compose-popup')) return;
@@ -4543,6 +4585,18 @@ if ('IntersectionObserver' in window && qwBlock) {
   }).observe(qwBlock);
 }
 if (qwBar) qwBar.addEventListener('click', openComposePopup);
+if ('IntersectionObserver' in window && qwNotice) {
+  new IntersectionObserver(function(entries) {
+    qwNoticeInView = entries[0].isIntersecting;
+    qwUpdateBar();
+  }).observe(qwNotice);
+}
+const qwBackBtn = document.getElementById('backBarBtn');
+if (qwBackBtn) qwBackBtn.addEventListener('click', function() {
+  const topBtn = document.getElementById('goToTodayBtn');
+  if (topBtn) topBtn.click();
+  setTimeout(qwUpdateBar, 60);
+});
 window.addEventListener('resize', qwUpdateBar);
 if ('ResizeObserver' in window) {
   const qwRO = new ResizeObserver(qwUpdateBar);
