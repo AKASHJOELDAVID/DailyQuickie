@@ -713,6 +713,7 @@
       background: var(--bg2);
       border-top: 1px solid var(--border);
       padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      border-right: 1px solid var(--border);
       cursor: pointer;
     }
     .quickbar.show { display: flex; }
@@ -764,6 +765,7 @@
     .compose-popup .compose-popup-close { display: block; }
     @media (max-width: 720px) {
       .quickbar, .compose.compose-popup { left: 0; }
+      .quickbar { border-right: none; }
     }
 
     /* ── FEED HEADER + FILTER ── */
