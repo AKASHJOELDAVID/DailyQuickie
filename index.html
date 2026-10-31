@@ -4549,6 +4549,14 @@ if ('IntersectionObserver' in window && qwBlock) {
   }).observe(qwBlock);
 }
 if (qwBar) qwBar.addEventListener('click', openComposePopup);
+window.addEventListener('resize', qwUpdateBar);
+if ('ResizeObserver' in window) {
+  const qwRO = new ResizeObserver(qwUpdateBar);
+  const qwRoA = document.querySelector('.main-scroll');
+  const qwRoB = document.querySelector('.main-scroll-inner');
+  if (qwRoA) qwRO.observe(qwRoA);
+  if (qwRoB) qwRO.observe(qwRoB);
+}
 if (qwBackdrop) qwBackdrop.addEventListener('click', closeComposePopup);
 const qwClose = document.getElementById('composePopupClose');
 if (qwClose) qwClose.addEventListener('click', closeComposePopup);
