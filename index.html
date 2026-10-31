@@ -4182,7 +4182,8 @@ function renderArchiveTree() {
 
     const yearBtn = document.createElement('button');
     yearBtn.className = 'year-btn' + (isSelYear ? ' active' : '');
-    yearBtn.innerHTML = `<span>${y}</span><span class="chevron ${isExpanded ? 'open' : ''}">▾</span>`;
+    const yCount = archiveData[y] ? Object.values(archiveData[y]).reduce((a, mo) => a + Object.values(mo).reduce((s, n) => s + n, 0), 0) : 0;
+    yearBtn.innerHTML = `<span>${y}</span><span style="display:flex;align-items:center;gap:8px;"><span class="month-count">${yCount ? formatCount(yCount) : ''}</span><span class="chevron ${isExpanded ? 'open' : ''}">▾</span></span>`;
     yearBtn.onclick = () => {
       if (expandedYears.has(yearKey)) {
         expandedYears.delete(yearKey);
