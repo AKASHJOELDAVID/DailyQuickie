@@ -716,6 +716,8 @@
       cursor: pointer;
     }
     .quickbar.show { display: flex; }
+    body.replies-overlay-open .quickbar,
+    body.mobile-reply-open .quickbar { display: none !important; }
     .quickbar-in {
       flex: 1;
       font-family: var(--sans);
@@ -1555,6 +1557,14 @@
         overflow-y: auto;
       }
       .mobile-reply-input:focus { outline: none; border-color: var(--accent); }
+      .mobile-reply-input { scrollbar-width: none; -ms-overflow-style: none; }
+      .mobile-reply-input::-webkit-scrollbar { display: none; }
+      .mobile-reply-label { white-space: nowrap; }
+      .mobile-reply-header .reply-key {
+        margin: 0 10px 0 auto;
+        max-width: 55%;
+        min-width: 0;
+      }
       .mobile-reply-send {
         flex-shrink: 0;
         width: 38px;
@@ -3068,7 +3078,7 @@ function buildReplyBlock(r, allReplies, noteId, readOnly, depth, parentReply) {
     const card = block.closest('.note-card, .replies-overlay');
     const existing = card.querySelector('.reply-compose');
     if (existing) { existing.remove(); return; }
-    const compose = buildComposeBox(noteId, r.id, r.nickname || 'anonymous');
+    const compose = buildComposeBox(noteId, r.id, r.nickname || 'anonymous', r.body);
     if (!compose) return; // mobile: opened as a bottom sheet already
     compose.dataset.top = 'true';
     let nested = block.querySelector('.nested-thread');
@@ -3280,7 +3290,7 @@ function openTopLevelCompose(toggleBtn, noteId) {
 // to place in the thread. On mobile it docks a bottom sheet to the screen itself (like
 // YouTube's mobile reply bar) and returns null — there's nothing left for the caller to insert.
 // replyToLabel is just the display name shown in the mobile sheet's "replying to ___" header.
-function buildComposeBox(noteId, parentReplyId, replyToLabel) {
+function buildComposeBox(noteId, parentReplyId, replyToLabel, replySnippet) {
   const mobile = isMobileView();
   const compose = document.createElement('div');
   compose.className = mobile ? 'mobile-reply-sheet' : 'reply-compose';
@@ -3376,6 +3386,13 @@ function buildComposeBox(noteId, parentReplyId, replyToLabel) {
     label.className = 'mobile-reply-label';
     label.textContent = replyToLabel ? `replying to ${replyToLabel}` : 'write a reply';
     header.appendChild(label);
+    if (replySnippet) {
+      const keyEl = document.createElement('div');
+      keyEl.className = 'reply-key';
+      const s = String(replySnippet).replace(/\s+/g, ' ').trim();
+      keyEl.textContent = '↳ ' + (s.length > 18 ? s.slice(0, 18) + '…' : s);
+      header.appendChild(keyEl);
+    }
 
     if (!isTopLevelNoteReply) {
       const closeBtn = document.createElement('button');
